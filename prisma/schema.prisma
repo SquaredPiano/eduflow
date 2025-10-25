@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+ model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  auth0Id   String   @unique
+  courses   Course[]
+  createdAt DateTime @default(now())
+}
+
+model Course {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  files     File[]
+}
+
+model File {
+  id          String       @id @default(cuid())
+  name        String
+  type        String       // pdf, pptx, mp4, docx
+  url         String
+  courseId    String
+  course      Course       @relation(fields: [courseId], references: [id])
+  transcripts Transcript[]
+  createdAt   DateTime     @default(now())
+}
+
+model Transcript {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  fileId    String
+  file      File     @relation(fields: [fileId], references: [id])
+  outputs   Output[]
+  createdAt DateTime @default(now())
+}
+
+model Output {
+  id           String     @id @default(cuid())
+  type         String     // notes, flashcards, quiz, slides
+  content      Json
+  transcriptId String
+  transcript   Transcript @relation(fields: [transcriptId], references: [id])
+  createdAt    DateTime   @default(now())
+}
