@@ -1,4 +1,4 @@
-export type OutputKind = 'notes' | 'quiz' | 'flashcards'
+export type OutputKind = 'notes' | 'quiz' | 'flashcards' | 'slides'
 
 export class OutputEntity {
   constructor(
@@ -8,3 +8,4 @@ export class OutputEntity {
     public readonly sourceTranscriptId?: string
   ) {}
 }
+

@@ -11,6 +11,7 @@
   "dependencies": {
     "@auth0/auth0-react": "^2.8.0",
     "@elevenlabs/elevenlabs-js": "^2.20.1",
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.18.0",
     "next": "16.0.0",
     "prisma": "^6.18.0",
