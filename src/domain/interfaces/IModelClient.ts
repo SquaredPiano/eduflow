@@ -1,5 +1,9 @@
+/**
+ * Lightweight model client abstraction.
+ * Prefer a single `complete`/`call` method so implementations can adapt to many LLM providers.
+ */
 export interface IModelClient {
-  generateNotes(input: { transcript: string }): Promise<{ notes: string }>
-  generateQuiz(input: { transcript: string }): Promise<{ questions: string[] }>
-  chat?(input: { messages: Array<{ role: 'user' | 'assistant'; content: string }> }): Promise<{ reply: string }>
+  complete(prompt: string, options?: Record<string, unknown>): Promise<string>
 }
+
+export default IModelClient
