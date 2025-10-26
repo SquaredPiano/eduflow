@@ -44,6 +44,7 @@ import { EducationAgentNode } from '@/components/canvas/EducationAgentNode';
 import OutputNode from '@/components/canvas/OutputNode';
 import { FloatingChat } from '@/components/canvas/FloatingChat';
 import { AgentSidebar, AgentSidebarToggle } from '@/components/canvas/AgentSidebar';
+import { RegenerateDialog } from '@/components/canvas/RegenerateDialog';
 
 const nodeTypes: NodeTypes = {
   fileNode: FileNode,
@@ -92,6 +93,16 @@ export default function CanvasPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showAgentSidebar, setShowAgentSidebar] = useState(false);
   const [nodeId, setNodeId] = useState(0);
+  
+  // Regeneration state
+  const [regenerateDialog, setRegenerateDialog] = useState<{
+    isOpen: boolean;
+    agentType: 'notes' | 'flashcards' | 'quiz' | 'slides';
+    outputId?: string;
+  }>({
+    isOpen: false,
+    agentType: 'notes',
+  });
 
   // Fetch project data
   const { data: project, isLoading, error } = useQuery<ProjectData>({
@@ -139,21 +150,27 @@ export default function CanvasPage() {
       },
     }));
 
-    // AI Agent nodes - EDUCATION TYPES ONLY (no youpac-ai types)
+    // AI Agent nodes - Education types only
     const agentNodes: Node[] = [
       {
         id: 'agent-notes',
         type: 'agentNode',
         position: { x: 500, y: 100 },
         data: {
-          type: 'notes', // Direct education type
+          type: 'notes',
           label: 'Notes Generator',
           draft: project.outputs.find((o) => o.type === 'notes')?.content?.content || '',
           status: project.outputs.find((o) => o.type === 'notes')?.status || 'idle',
+          outputId: project.outputs.find((o) => o.type === 'notes')?.id,
           connections: fileNodes.map((n) => n.id),
           onGenerate: () => handleGenerate('notes'),
           onView: () => handleViewOutput('notes'),
           onChat: () => console.log('Chat with notes agent'),
+          onRegenerate: () => handleOpenRegenerateDialog('notes'),
+          onDownload: (format?: string) => {
+            const outputId = project.outputs.find((o) => o.type === 'notes')?.id;
+            if (outputId) handleDownloadOutput(outputId, (format as any) || 'pdf');
+          },
         },
       },
       {
@@ -161,14 +178,20 @@ export default function CanvasPage() {
         type: 'agentNode',
         position: { x: 500, y: 320 },
         data: {
-          type: 'flashcards', // Direct education type
+          type: 'flashcards',
           label: 'Flashcards Creator',
           draft: project.outputs.find((o) => o.type === 'flashcards')?.content?.cards?.[0]?.front || '',
           status: project.outputs.find((o) => o.type === 'flashcards')?.status || 'idle',
+          outputId: project.outputs.find((o) => o.type === 'flashcards')?.id,
           connections: fileNodes.map((n) => n.id),
           onGenerate: () => handleGenerate('flashcards'),
           onView: () => handleViewOutput('flashcards'),
           onChat: () => console.log('Chat with flashcards agent'),
+          onRegenerate: () => handleOpenRegenerateDialog('flashcards'),
+          onDownload: (format?: string) => {
+            const outputId = project.outputs.find((o) => o.type === 'flashcards')?.id;
+            if (outputId) handleDownloadOutput(outputId, (format as any) || 'anki');
+          },
         },
       },
       {
@@ -176,14 +199,20 @@ export default function CanvasPage() {
         type: 'agentNode',
         position: { x: 500, y: 540 },
         data: {
-          type: 'quiz', // Direct education type
+          type: 'quiz',
           label: 'Quiz Generator',
           draft: project.outputs.find((o) => o.type === 'quiz')?.content?.questions?.[0]?.question || '',
           status: project.outputs.find((o) => o.type === 'quiz')?.status || 'idle',
+          outputId: project.outputs.find((o) => o.type === 'quiz')?.id,
           connections: fileNodes.map((n) => n.id),
           onGenerate: () => handleGenerate('quiz'),
           onView: () => handleViewOutput('quiz'),
           onChat: () => console.log('Chat with quiz agent'),
+          onRegenerate: () => handleOpenRegenerateDialog('quiz'),
+          onDownload: (format?: string) => {
+            const outputId = project.outputs.find((o) => o.type === 'quiz')?.id;
+            if (outputId) handleDownloadOutput(outputId, (format as any) || 'csv');
+          },
         },
       },
       {
@@ -191,14 +220,20 @@ export default function CanvasPage() {
         type: 'agentNode',
         position: { x: 500, y: 760 },
         data: {
-          type: 'slides', // Direct education type
+          type: 'slides',
           label: 'Slides Extractor',
           draft: project.outputs.find((o) => o.type === 'slides')?.content?.slides?.[0]?.title || '',
           status: project.outputs.find((o) => o.type === 'slides')?.status || 'idle',
+          outputId: project.outputs.find((o) => o.type === 'slides')?.id,
           connections: fileNodes.map((n) => n.id),
           onGenerate: () => handleGenerate('slides'),
           onView: () => handleViewOutput('slides'),
           onChat: () => console.log('Chat with slides agent'),
+          onRegenerate: () => handleOpenRegenerateDialog('slides'),
+          onDownload: (format?: string) => {
+            const outputId = project.outputs.find((o) => o.type === 'slides')?.id;
+            if (outputId) handleDownloadOutput(outputId, (format as any) || 'pptx');
+          },
         },
       },
     ];
@@ -356,7 +391,27 @@ export default function CanvasPage() {
       
       const transcriptId = transcriptResponse.transcript.id;
 
-      // Step 2: Call generate API with correct transcriptId
+      // Step 2: Detect agent chaining - find connected agent nodes and collect their outputs
+      const currentAgentId = `agent-${type}`;
+      const incomingEdges = edges.filter(edge => edge.target === currentAgentId);
+      const agentContext: Array<{ type: string; content: any; outputId: string }> = [];
+
+      for (const edge of incomingEdges) {
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        if (sourceNode && sourceNode.type === 'agentNode' && sourceNode.data.outputId) {
+          // This agent node has generated content - fetch it for context
+          const sourceOutput = project.outputs.find(o => o.id === sourceNode.data.outputId);
+          if (sourceOutput) {
+            agentContext.push({
+              type: sourceOutput.type,
+              content: sourceOutput.content,
+              outputId: sourceOutput.id,
+            });
+          }
+        }
+      }
+
+      // Step 3: Call generate API with correct transcriptId and optional agent context
       const generateResponse = await api.post<{
         success: boolean;
         output: {
@@ -368,6 +423,7 @@ export default function CanvasPage() {
       }>('/api/generate', {
         transcriptId,
         type,
+        ...(agentContext.length > 0 && { agentContext }),
       });
 
       const output = generateResponse.output;
@@ -433,6 +489,129 @@ export default function CanvasPage() {
 
   const handleViewOutput = (type: string) => {
     router.push(`/dashboard/project/${projectId}?tab=outputs&type=${type}`);
+  };
+
+  const handleOpenRegenerateDialog = (type: 'notes' | 'flashcards' | 'quiz' | 'slides') => {
+    const output = project?.outputs.find((o) => o.type === type);
+    setRegenerateDialog({
+      isOpen: true,
+      agentType: type,
+      outputId: output?.id,
+    });
+  };
+
+  const handleRegenerateWithContext = async (userContext: string) => {
+    if (!project?.files[0] || !regenerateDialog.outputId) {
+      toast.error('Cannot regenerate - missing file or output');
+      return;
+    }
+
+    try {
+      // Step 1: Get transcript ID
+      const transcriptResponse = await api.get<{ success: boolean; transcript: { id: string; content: string } }>(
+        `/api/files/${project.files[0].id}/transcript`
+      );
+      
+      if (!transcriptResponse.transcript) {
+        toast.error('No transcript found');
+        return;
+      }
+      
+      const transcriptId = transcriptResponse.transcript.id;
+
+      // Step 2: Detect agent chaining
+      const currentAgentId = `agent-${regenerateDialog.agentType}`;
+      const incomingEdges = edges.filter(edge => edge.target === currentAgentId);
+      const agentContext: Array<{ type: string; content: any; outputId: string }> = [];
+
+      for (const edge of incomingEdges) {
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        if (sourceNode && sourceNode.type === 'agentNode' && sourceNode.data.outputId) {
+          const sourceOutput = project.outputs.find(o => o.id === sourceNode.data.outputId);
+          if (sourceOutput) {
+            agentContext.push({
+              type: sourceOutput.type,
+              content: sourceOutput.content,
+              outputId: sourceOutput.id,
+            });
+          }
+        }
+      }
+
+      // Step 3: Regenerate with user context
+      const generateResponse = await api.post<{
+        success: boolean;
+        output: {
+          id: string;
+          type: string;
+          content: any;
+          transcriptId: string;
+        };
+      }>('/api/generate', {
+        transcriptId,
+        type: regenerateDialog.agentType,
+        userContext,
+        previousOutputId: regenerateDialog.outputId,
+        ...(agentContext.length > 0 && { agentContext }),
+      });
+
+      const output = generateResponse.output;
+
+      // Step 4: Update node with regenerated content
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === currentAgentId) {
+            let preview = '';
+            try {
+              const content = typeof output.content === 'string' 
+                ? JSON.parse(output.content) 
+                : output.content;
+              
+              if (regenerateDialog.agentType === 'flashcards' && Array.isArray(content)) {
+                preview = content[0]?.front || 'Flashcards regenerated';
+              } else if (regenerateDialog.agentType === 'quiz' && content.questions) {
+                preview = content.questions[0]?.question || 'Quiz regenerated';
+              } else if (regenerateDialog.agentType === 'notes' && typeof content === 'string') {
+                preview = content.substring(0, 100);
+              } else if (regenerateDialog.agentType === 'slides' && content.slides) {
+                preview = `${content.slides.length} slides regenerated`;
+              }
+            } catch {
+              preview = 'Content regenerated successfully';
+            }
+
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                draft: preview,
+                outputId: output.id,
+                status: 'ready',
+              },
+            };
+          }
+          return node;
+        })
+      );
+
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      toast.success(`${regenerateDialog.agentType} regenerated with your instructions!`);
+
+      // GSAP: Success animation
+      const tl = gsap.timeline();
+      tl.to(`#${currentAgentId}`, {
+        scale: 1.1,
+        duration: 0.3,
+        yoyo: true,
+        repeat: 2,
+        ease: 'power2.inOut',
+      });
+    } catch (error) {
+      console.error('Regeneration error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to regenerate content';
+      toast.error(errorMessage);
+      throw error; // Re-throw so dialog can handle it
+    }
   };
 
   const handleDownloadOutput = async (outputId: string, format?: 'pdf' | 'anki' | 'csv' | 'pptx') => {
@@ -804,12 +983,19 @@ export default function CanvasPage() {
       </div>
 
       {/* Agent Sidebar */}
-      <AgentSidebar 
-        isOpen={showAgentSidebar} 
+      <AgentSidebar
+        isOpen={showAgentSidebar}
         onClose={() => setShowAgentSidebar(false)}
       />
 
-      {/* Settings Drawer */}
+      {/* Regenerate Dialog */}
+      <RegenerateDialog
+        isOpen={regenerateDialog.isOpen}
+        onClose={() => setRegenerateDialog({ ...regenerateDialog, isOpen: false })}
+        onRegenerate={handleRegenerateWithContext}
+        agentType={regenerateDialog.agentType}
+        outputId={regenerateDialog.outputId}
+      />      {/* Settings Drawer */}
       <AnimatePresence>
         {showSettings && (
           <>

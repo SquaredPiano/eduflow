@@ -29,7 +29,7 @@ import { IModelClient } from "@/domain/interfaces/IModelClient";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { transcriptId, type, options } = body;
+    const { transcriptId, type, options, agentContext, userContext, previousOutputId } = body;
 
     // Validate required fields
     if (!transcriptId) {
@@ -84,11 +84,16 @@ export async function POST(req: NextRequest) {
 
     // Generate content
     if (type) {
-      // Generate single type
+      // Generate single type with optional context
       const output = await generateService.generate(
         transcriptId,
         type as AgentType,
-        options
+        {
+          ...options,
+          agentContext,
+          userContext,
+          previousOutputId,
+        }
       );
 
       return NextResponse.json({

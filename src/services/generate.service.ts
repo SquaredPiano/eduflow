@@ -43,13 +43,18 @@ export class GenerateService {
    * 
    * @param transcriptId - The transcript to process
    * @param type - Type of output to generate (notes, flashcards, quiz, slides)
-   * @param options - Additional options (e.g., quiz difficulty)
+   * @param options - Additional options including agentContext, userContext, and previousOutputId
    * @returns The generated OutputEntity
    */
   async generate(
     transcriptId: string,
     type: AgentType,
-    options?: Record<string, any>
+    options?: {
+      agentContext?: Array<{ type: string; content: any; outputId: string }>;
+      userContext?: string;
+      previousOutputId?: string;
+      [key: string]: any;
+    }
   ): Promise<OutputEntity> {
     // Get the transcript from database
     const transcriptRecord = await prisma.transcript.findUnique({
@@ -73,18 +78,52 @@ export class GenerateService {
     }
 
     try {
-      // Process the transcript with the agent
+      // Prepare agent context string if provided
+      let agentContextText = '';
+      if (options?.agentContext && options.agentContext.length > 0) {
+        agentContextText = '\n\n=== Context from Connected Agents ===\n';
+        for (const ctx of options.agentContext) {
+          agentContextText += `\n--- ${ctx.type.toUpperCase()} ---\n`;
+          agentContextText += typeof ctx.content === 'string' 
+            ? ctx.content 
+            : JSON.stringify(ctx.content, null, 2);
+          agentContextText += '\n';
+        }
+      }
+
+      // Prepare user context string if provided
+      let userContextText = '';
+      if (options?.userContext) {
+        userContextText = `\n\n=== Additional Instructions ===\n${options.userContext}\n`;
+      }
+
+      // Process the transcript with the agent, including contexts
       const content = await agent.process({
-        transcript: transcript.text, // TranscriptEntity uses 'text' property
+        transcript: transcript.text + agentContextText + userContextText,
         ...options,
       });
 
-      // Save the output to database
+      // Calculate version number
+      let version = 1;
+      if (options?.previousOutputId) {
+        const previousOutput = await prisma.output.findUnique({
+          where: { id: options.previousOutputId },
+        });
+        if (previousOutput) {
+          version = (previousOutput.version || 1) + 1;
+        }
+      }
+
+      // Save the output to database with context fields
       const outputRecord = await prisma.output.create({
         data: {
           type,
           content,
           transcriptId,
+          userContext: options?.userContext || undefined,
+          agentContext: options?.agentContext ? (options.agentContext as any) : undefined,
+          previousOutputId: options?.previousOutputId || undefined,
+          version,
         },
       });
 
@@ -149,7 +188,7 @@ export class GenerateService {
       output.id,
       output.type as AgentType,
       output.content,
-      output.transcriptId
+      output.transcriptId || undefined
     );
   }
 
@@ -173,7 +212,7 @@ export class GenerateService {
           o.id,
           o.type as AgentType,
           o.content,
-          o.transcriptId
+          o.transcriptId || undefined
         )
     );
   }
