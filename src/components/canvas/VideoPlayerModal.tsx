@@ -1,5 +1,5 @@
-import { Dialog, DialogContent } from "~/components/ui/dialog";
-import { Button } from "~/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { X, Download, Maximize2, Play, Pause, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "~/lib/utils";

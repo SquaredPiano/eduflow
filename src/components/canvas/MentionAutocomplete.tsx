@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { FileText, Image, Twitter } from "lucide-react";
-import { Card } from "~/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 interface MentionOption {
   value: string;

@@ -7,7 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 
 interface DeleteConfirmationDialogProps {

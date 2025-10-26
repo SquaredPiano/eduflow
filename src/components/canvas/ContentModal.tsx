@@ -4,15 +4,15 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
-import { Button } from "~/components/ui/button";
-import { Textarea } from "~/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, Check, Eye, Edit3, Youtube, Twitter, Sparkles, FileText, Image, Download } from "lucide-react";
 import { toast } from "sonner";
-import { Card } from "~/components/ui/card";
-import { YouTubePreview } from "~/components/preview/YouTubePreview";
-import { TwitterThreadPreview } from "~/components/preview/TwitterThreadPreview";
+import { Card } from "@/components/ui/card";
+import { YouTubePreview } from "@/components/preview/YouTubePreview";
+import { TwitterThreadPreview } from "@/components/preview/TwitterThreadPreview";
 import { cn } from "~/lib/utils";
 
 interface ContentModalProps {

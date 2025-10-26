@@ -1,16 +1,16 @@
 import { memo, useState } from "react";
 import { Handle, Position, type NodeProps } from "./ReactFlowComponents";
 import { Link, Music, Video, Image, Plus, X, Globe, Sparkles, Loader2 } from "lucide-react";
-import { Card } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Badge } from "~/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "~/components/ui/tooltip";
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useAction } from "convex/react";
 import { api } from "convex/_generated/api";

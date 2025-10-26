@@ -1,14 +1,14 @@
 import { memo, useState } from "react";
 import { Handle, Position, type NodeProps } from "./ReactFlowComponents";
 import { FileText, Clock, Hash, Eye, Download, Copy, Check } from "lucide-react";
-import { Card } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "~/components/ui/tooltip";
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
 export interface TranscriptionNodeData {

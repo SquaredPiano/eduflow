@@ -3,10 +3,10 @@ import { ReactFlowWrapper } from "./ReactFlowWrapper";
 import { VideoNode } from "./VideoNode";
 import { AgentNode } from "./AgentNode";
 import type { NodeTypes } from "./ReactFlowComponents";
-import { Button } from "~/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye } from "lucide-react";
 import { Link } from "react-router";
-import { PreviewModal } from "~/components/preview/PreviewModal";
+import { PreviewModal } from "@/components/preview/PreviewModal";
 
 const nodeTypes: NodeTypes = {
   video: VideoNode,

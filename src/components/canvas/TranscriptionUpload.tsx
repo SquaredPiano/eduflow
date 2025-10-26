@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react";
 import { Upload, FileText, X, AlertCircle, CheckCircle } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "~/components/ui/dialog";
-import { Progress } from "~/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { parseTranscriptionFile, validateTranscription, showValidationResults } from "~/utils/transcription-upload";
 import type { ParsedTranscription } from "~/utils/transcription-upload";

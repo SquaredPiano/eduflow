@@ -1,14 +1,14 @@
 import { memo, useState, useRef, useEffect } from "react";
 import { Handle, Position, type NodeProps } from "./ReactFlowComponents";
 import { Play, Film, Loader2, FileText, AlertCircle, RefreshCw, Sparkles, Clock, HardDrive, Upload, Eye } from "lucide-react";
-import { Card } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "~/components/ui/tooltip";
+} from "@/components/ui/tooltip";
 
 export interface VideoNodeData {
   title?: string;

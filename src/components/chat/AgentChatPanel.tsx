@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/apiClient';
+import { toast } from 'sonner';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -67,6 +68,7 @@ export function AgentChatPanel({
     },
     onError: (error) => {
       console.error('Chat error:', error);
+      toast.error('Failed to get AI response. Please try again.');
       setMessages(prev => [
         ...prev,
         {
