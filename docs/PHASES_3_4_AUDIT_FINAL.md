@@ -325,7 +325,7 @@ if (!input.transcript || input.transcript.trim().length === 0) {
 ### Environment Variables Required
 ```bash
 # Gemini API
-GEMINI_API_KEY=AIzaSyCre-scQZuPkS7ndveHg698nE8aqrgu9As
+GEMINI_API_KEY=your_gemini_api_key_here
 
 # ElevenLabs API
 ELEVENLABS_API_KEY=[configured]

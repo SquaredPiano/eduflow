@@ -162,7 +162,7 @@ Phase 3 has been **fully completed** using ElevenLabs Speech-to-Text API instead
 ✅ Documentation updated to Speech-to-Text (not TTS)
 ```
 
-**API Key**: `sk_efa49889e14345ef921c30dcff9a7cfa2e157674b2b42801`
+**API Key**: `your_elevenlabs_api_key_here`
 
 ---
 
@@ -402,7 +402,7 @@ curl http://localhost:3000/api/transcribe?fileId=file-123
 
 ### Current Key:
 ```bash
-ELEVENLABS_API_KEY="sk_efa49889e14345ef921c30dcff9a7cfa2e157674b2b42801"
+ELEVENLABS_API_KEY="your_elevenlabs_api_key_here"
 ```
 
 ### Security Notes:
