@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.8.0",
-    "@auth0/nextjs-auth0": "^4.11.0",
     "@elevenlabs/elevenlabs-js": "^2.20.1",
     "@prisma/client": "^6.18.0",
     "next": "^15.2.3",
