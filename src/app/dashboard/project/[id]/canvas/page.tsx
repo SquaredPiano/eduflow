@@ -91,10 +91,20 @@ export default function CanvasPage() {
   const [showSettings, setShowSettings] = useState(false);
 
   // Fetch project data
-  const { data: project, isLoading } = useQuery<ProjectData>({
+  const { data: project, isLoading, error } = useQuery<ProjectData>({
     queryKey: ['project', projectId],
-    queryFn: () => api.get(`/api/projects/${projectId}`),
+    queryFn: async (): Promise<ProjectData> => {
+      try {
+        const data = await api.get<ProjectData>(`/api/projects/${projectId}`);
+        console.log('✅ Project loaded:', data);
+        return data;
+      } catch (err) {
+        console.error('❌ Failed to load project:', err);
+        throw err;
+      }
+    },
     enabled: !!projectId,
+    retry: 1,
   });
 
   // GSAP: Canvas entry animation
@@ -391,25 +401,54 @@ export default function CanvasPage() {
         >
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading canvas...</p>
+          <p className="text-xs text-gray-400 mt-2">Project ID: {projectId}</p>
         </motion.div>
       </div>
     );
   }
 
-  if (!project) {
+  if (error || (!project && !isLoading)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#FAF9F6]">
         <Card className="p-6 text-center max-w-md">
-          <h3 className="font-semibold mb-2">Project not found</h3>
-          <Link href="/dashboard">
-            <Button>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Dashboard
+          <h3 className="font-semibold mb-4 text-red-600">
+            {error ? 'Failed to load project' : 'Project not found'}
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            {error 
+              ? 'There was an error loading this project. Please try again or contact support if the issue persists.'
+              : "This project doesn't exist or you don't have access to it."
+            }
+            <br />
+            <span className="text-xs text-gray-500 mt-2 block">Project ID: {projectId}</span>
+            {error && (
+              <span className="text-xs text-red-500 mt-2 block">
+                Error: {error instanceof Error ? error.message : 'Unknown error'}
+              </span>
+            )}
+          </p>
+          <div className="space-y-2">
+            <Link href="/dashboard">
+              <Button className="w-full">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
+              </Button>
+            </Link>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+              className="w-full"
+            >
+              Retry Loading
             </Button>
-          </Link>
+          </div>
         </Card>
       </div>
     );
+  }
+
+  if (!project) {
+    return null; // Should not reach here due to checks above
   }
 
   return (
@@ -482,6 +521,9 @@ export default function CanvasPage() {
           onConnect={onConnect}
           onInit={setReactFlowInstance}
           nodeTypes={nodeTypes}
+          nodesDraggable={true}
+          nodesConnectable={true}
+          elementsSelectable={true}
           fitView
           className="bg-[#FAF9F6]"
         >

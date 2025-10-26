@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (geminiApiKey) {
       try {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }); // Updated to match generate API
 
         // Build conversation history
         const conversationHistory = messages.map(msg => ({
