@@ -43,6 +43,7 @@ import FileNode from '@/components/canvas/FileNode';
 import { AgentNode } from '@/components/canvas/AgentNode';
 import OutputNode from '@/components/canvas/OutputNode';
 import { FloatingChat } from '@/components/canvas/FloatingChat';
+import { AgentSidebar, AgentSidebarToggle } from '@/components/canvas/AgentSidebar';
 
 const nodeTypes: NodeTypes = {
   fileNode: FileNode,
@@ -89,6 +90,8 @@ export default function CanvasPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAgentSidebar, setShowAgentSidebar] = useState(false);
+  const [nodeId, setNodeId] = useState(0);
 
   // Fetch project data
   const { data: project, isLoading, error } = useQuery<ProjectData>({
@@ -282,6 +285,62 @@ export default function CanvasPage() {
       }, 50);
     },
     [setEdges]
+  );
+
+  // Handle drag over canvas (allow drop)
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  // Handle drop onto canvas
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+
+      const agentType = event.dataTransfer.getData('application/reactflow');
+      const agentLabel = event.dataTransfer.getData('agentLabel');
+
+      if (!agentType || !reactFlowInstance) return;
+
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      const newNodeId = `agent-${agentType}-${nodeId}`;
+      const newNode: Node = {
+        id: newNodeId,
+        type: 'agentNode',
+        position,
+        data: {
+          type: agentType === 'notes' ? 'title' : agentType === 'flashcards' ? 'description' : agentType === 'quiz' ? 'thumbnail' : 'tweets',
+          label: agentLabel,
+          draft: '',
+          status: 'idle',
+          connections: [],
+          onGenerate: () => handleGenerate(agentType),
+          onView: () => handleViewOutput(agentType),
+          onChat: () => console.log(`Chat with ${agentType} agent`),
+        },
+      };
+
+      setNodes((nds) => nds.concat(newNode));
+      setNodeId((id) => id + 1);
+
+      toast.success(`${agentLabel} added to canvas!`);
+
+      // GSAP: Animate new node
+      setTimeout(() => {
+        gsap.from(`#${newNodeId}`, {
+          scale: 0.5,
+          opacity: 0,
+          duration: 0.5,
+          ease: 'back.out(1.7)',
+        });
+      }, 50);
+    },
+    [reactFlowInstance, nodeId, setNodes]
   );
 
   const handleGenerate = async (type: string) => {
@@ -519,6 +578,8 @@ export default function CanvasPage() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
           onInit={setReactFlowInstance}
           nodeTypes={nodeTypes}
           nodesDraggable={true}
@@ -639,7 +700,19 @@ export default function CanvasPage() {
           onSendMessage={handleSendMessage}
           isGenerating={isGenerating}
         />
+
+        {/* Agent Sidebar Toggle Button */}
+        <AgentSidebarToggle 
+          onClick={() => setShowAgentSidebar(true)} 
+          isOpen={showAgentSidebar}
+        />
       </div>
+
+      {/* Agent Sidebar */}
+      <AgentSidebar 
+        isOpen={showAgentSidebar} 
+        onClose={() => setShowAgentSidebar(false)}
+      />
 
       {/* Settings Drawer */}
       <AnimatePresence>
