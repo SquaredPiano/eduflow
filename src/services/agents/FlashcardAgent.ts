@@ -30,7 +30,7 @@ export class FlashcardAgent implements IAgent {
       const flashcards = await this.modelClient.complete(prompt, {
         systemPrompt: AGENT_PROMPTS.flashcards.system,
         temperature: 0.4, // Slightly higher for varied question phrasing
-        maxTokens: 3072,
+        maxTokens: 8192, // Increased for 15-20 flashcards
       });
 
       // Extract JSON from response (handles markdown code blocks or extra text)

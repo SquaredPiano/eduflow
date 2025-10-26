@@ -34,7 +34,7 @@ export class QuizAgent implements IAgent {
       const quiz = await this.modelClient.complete(prompt, {
         systemPrompt: AGENT_PROMPTS.quiz.system,
         temperature: 0.5, // Balanced for variety while maintaining accuracy
-        maxTokens: 4096,
+        maxTokens: 8192, // Increased for 10 questions with explanations
       });
 
       // Extract JSON from response (handles markdown code blocks or extra text)
