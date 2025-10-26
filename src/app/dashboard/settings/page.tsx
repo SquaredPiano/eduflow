@@ -190,7 +190,7 @@ export default function SettingsPage() {
               <Button 
                 onClick={() => saveCanvasMutation.mutate()}
                 disabled={saveCanvasMutation.isPending || !canvasUrl || !canvasToken}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-[#0b8e16] hover:bg-[#097a12]"
               >
                 {saveCanvasMutation.isPending ? 'Saving...' : 'Save Canvas Settings'}
               </Button>

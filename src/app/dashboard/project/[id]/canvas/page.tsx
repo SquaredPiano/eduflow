@@ -450,7 +450,7 @@ export default function CanvasPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <Loader2 className="h-12 w-12 animate-spin text-green-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading canvas...</p>
           <p className="text-xs text-gray-400 mt-2">Project ID: {projectId}</p>
         </motion.div>
@@ -549,7 +549,7 @@ export default function CanvasPage() {
               size="sm"
               onClick={saveCanvas}
               disabled={isSaving}
-              className="bg-blue-600 hover:bg-blue-700 save-button"
+              className="bg-[#0b8e16] hover:bg-[#097a12] save-button"
             >
               {isSaving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -609,9 +609,9 @@ export default function CanvasPage() {
               <div className="text-sm font-semibold mb-3 text-gray-900">Legend</div>
               <div className="space-y-2">
                 {[
-                  { color: 'bg-blue-600', label: 'Source Files' },
-                  { color: 'bg-green-600', label: 'AI Agents' },
-                  { color: 'bg-purple-600', label: 'Outputs' },
+                  { color: 'bg-green-600', label: 'Source Files' },
+                  { color: 'bg-emerald-600', label: 'AI Agents' },
+                  { color: 'bg-teal-600', label: 'Outputs' },
                 ].map((item, index) => (
                   <motion.div
                     key={item.label}
