@@ -1,0 +1,19 @@
+# EduFlow Flashcards - Import this file into Anki
+# Format: Front\tBack\tTags
+# To import: Anki → File → Import → Select this file
+#
+What fundamental principles does quantum computing leverage?	Quantum computing leverages the principles of quantum mechanics.	eduflow generated
+How do the basic units of information differ between classical and quantum computers?	Classical computers use bits (0 or 1), while quantum computers use quantum bits or qubits.	eduflow generated
+Define a qubit and explain its primary characteristic that distinguishes it from a classical bit.	A qubit is a quantum bit that can exist in superposition, meaning it can represent multiple states simultaneously, unlike a classical bit which is strictly 0 or 1.	eduflow generated
+Explain the concept of superposition in quantum computing.	Superposition is a principle where a qubit can exist in multiple states (e.g., 0 and 1) at the same time, rather than being limited to a single state.	eduflow generated
+How does superposition enable quantum computers to process information differently from classical computers?	Superposition allows qubits to represent multiple states simultaneously, enabling quantum computers to process vast amounts of information in parallel.	eduflow generated
+Describe entanglement in the context of quantum computing.	Entanglement is a phenomenon where qubits become correlated in ways that have no classical equivalent, meaning the state of one qubit instantly influences the state of another, regardless of distance.	eduflow generated
+What is the primary advantage offered by the ability of qubits to exist in superposition?	The ability of qubits to exist in superposition allows quantum computers to process vast amounts of information in parallel.	eduflow generated
+Name two key quantum mechanical concepts that are fundamental to quantum computing.	The two key concepts are superposition and entanglement.	eduflow generated
+In what way is the correlation between entangled qubits unique compared to classical correlations?	Entangled qubits are correlated in ways that have no classical equivalent, implying a deeper, non-local connection.	eduflow generated
+List four potential application areas for quantum computing mentioned in the text.	Potential applications include cryptography, drug discovery, financial modeling, and optimization problems.	eduflow generated
+Why is quantum computing considered a 'revolutionary approach to computation'?	It's revolutionary because it leverages the principles of quantum mechanics, enabling fundamentally different ways of processing information compared to classical computers.	eduflow generated
+What are the possible states of a classical bit?	A classical bit can exist in one of two states: 0 or 1.	eduflow generated
+Which quantum principle directly contributes to a quantum computer's ability to handle 'vast amounts of information in parallel'?	Superposition directly contributes to a quantum computer's ability to handle vast amounts of information in parallel.	eduflow generated
+How does the processing capability of a quantum computer, based on its fundamental units, compare to a classical computer?	Quantum computers, using qubits in superposition, can process vast amounts of information in parallel, a capability not possible with classical bits.	eduflow generated
+What does it mean for qubits to be 'correlated in ways that have no classical equivalent'?	It refers to entanglement, where the states of entangled qubits are interdependent in a manner that cannot be explained by classical physics.	eduflow generated
