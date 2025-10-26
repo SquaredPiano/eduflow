@@ -170,7 +170,12 @@ export async function slidesToPdf(
   slides: Slide[],
   title = 'presentation'
 ): Promise<SerializerResult> {
-  const htmlPdf = require('html-pdf-node');
+  // TODO: Re-implement with a Next.js compatible PDF library
+  throw new Error('PDF export temporarily unavailable - use PPTX instead');
+  
+  /* Disabled due to html-pdf-node compatibility issues
+  // Dynamic import for server-side only dependencies
+  const htmlPdf = await import('html-pdf-node').then(m => m.default || m);
   
   // Convert slides to HTML
   const html = slidesToHTML(slides, title);
@@ -199,6 +204,7 @@ export async function slidesToPdf(
   } catch (error) {
     throw new Error(`Failed to generate slides PDF: ${error instanceof Error ? error.message : String(error)}`);
   }
+  */
 }
 
 // ============= Helper Functions =============

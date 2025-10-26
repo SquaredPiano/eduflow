@@ -328,8 +328,18 @@ export default function CanvasPage() {
       const agentType = event.dataTransfer.getData('application/reactflow');
       const agentLabel = event.dataTransfer.getData('agentLabel');
 
-      if (!agentType || !reactFlowInstance) return;
+      if (!agentType || !agentLabel) {
+        console.warn('Missing agent type or label in drag data');
+        return;
+      }
 
+      if (!reactFlowInstance) {
+        console.warn('ReactFlow instance not initialized yet');
+        toast.error('Canvas not ready - please try again');
+        return;
+      }
+
+      // Convert screen position to flow position
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
@@ -359,12 +369,15 @@ export default function CanvasPage() {
 
       // GSAP: Animate new node
       setTimeout(() => {
-        gsap.from(`#${newNodeId}`, {
-          scale: 0.5,
-          opacity: 0,
-          duration: 0.5,
-          ease: 'back.out(1.7)',
-        });
+        const nodeElement = document.querySelector(`[data-id="${newNodeId}"]`);
+        if (nodeElement) {
+          gsap.from(nodeElement, {
+            scale: 0.5,
+            opacity: 0,
+            duration: 0.5,
+            ease: 'back.out(1.7)',
+          });
+        }
       }, 50);
     },
     [reactFlowInstance, nodeId, setNodes]
@@ -712,16 +725,40 @@ export default function CanvasPage() {
 
     setMessages((prev) => [...prev, userMessage]);
 
-    // TODO: Implement actual AI chat
-    setTimeout(() => {
+    try {
+      // Call the chat API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map(m => ({
+            role: m.role === 'ai' ? 'assistant' : 'user',
+            content: m.content,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Chat request failed');
+      }
+
+      const data = await response.json();
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'ai',
-        content: "I can help you with that! This is a placeholder response. The AI chat will be integrated with your agents soon.",
+        content: data.message,
         timestamp: Date.now(),
       };
+      
       setMessages((prev) => [...prev, aiMessage]);
-    }, 1000);
+    } catch (error) {
+      console.error('Chat error:', error);
+      toast.error('Failed to get AI response. Please try again.');
+      
+      // Remove the user message on error
+      setMessages((prev) => prev.filter(m => m.id !== userMessage.id));
+    }
   };
 
   if (isLoading) {

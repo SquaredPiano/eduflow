@@ -19,6 +19,22 @@ function shouldExtractText(mimeType: string): boolean {
 }
 
 /**
+ * Check if a file type should be transcribed with ElevenLabs
+ */
+function shouldTranscribe(mimeType: string): boolean {
+  const transcribableTypes = [
+    'audio/mpeg',        // MP3
+    'audio/wav',         // WAV
+    'audio/x-m4a',       // M4A
+    'audio/mp4',         // M4A alternative
+    'video/mp4',         // MP4
+    'video/webm',        // WebM
+    'video/quicktime',   // QuickTime MOV
+  ];
+  return transcribableTypes.includes(mimeType);
+}
+
+/**
  * Extract text from a file in the background and save to database
  */
 async function extractTextInBackground(
@@ -49,6 +65,33 @@ async function extractTextInBackground(
   } catch (error) {
     console.error(`❌ Text extraction failed for ${fileId}:`, error);
     throw error;
+  }
+}
+
+/**
+ * Transcribe audio/video file using ElevenLabs in the background
+ */
+async function transcribeInBackground(fileId: string): Promise<void> {
+  try {
+    console.log(`🎙️ Starting background transcription for file ${fileId}`);
+    
+    // Call the transcribe API endpoint
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/transcribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileId }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Transcription failed');
+    }
+    
+    const result = await response.json();
+    console.log(`✅ Transcription complete for ${fileId}:`, result.transcript.id);
+  } catch (error) {
+    console.error(`❌ Transcription failed for ${fileId}:`, error);
+    // Don't throw - allow upload to succeed even if transcription fails
   }
 }
 
@@ -137,13 +180,23 @@ export const ourFileRouter = {
 
         console.log("✅ File saved to database with ID:", savedFile.id);
 
-        // Trigger async text extraction for supported file types
-        // Don't await this - let it happen in the background
-        if (file.type && shouldExtractText(file.type)) {
-          extractTextInBackground(savedFile.id, file.url, file.type)
-            .catch((error: unknown) => {
-              console.error(`⚠️ Background text extraction failed for ${savedFile.id}:`, error);
-            });
+        // Trigger async processing based on file type
+        if (file.type) {
+          // Text extraction for documents
+          if (shouldExtractText(file.type)) {
+            extractTextInBackground(savedFile.id, file.url, file.type)
+              .catch((error: unknown) => {
+                console.error(`⚠️ Background text extraction failed for ${savedFile.id}:`, error);
+              });
+          }
+          
+          // ElevenLabs transcription for audio/video
+          if (shouldTranscribe(file.type)) {
+            transcribeInBackground(savedFile.id)
+              .catch((error: unknown) => {
+                console.error(`⚠️ Background transcription failed for ${savedFile.id}:`, error);
+              });
+          }
         }
 
         // Return data to client

@@ -109,16 +109,37 @@ Empower students to become self-directed learners who understand not just what t
       }
     }
 
-    // Fallback to OpenRouter
+    // Fallback to OpenRouter (Anthropic Claude)
     if (openRouterApiKey) {
       try {
-        // Build system message with output context
-        const systemMessage: Message = {
-          role: 'system',
-          content: outputContent && outputType
-            ? `You are an AI learning assistant helping a student refine their ${outputType}. Here's the current content:\n\n${JSON.stringify(outputContent, null, 2)}\n\nHelp the student improve this content by answering their questions and providing suggestions.`
-            : 'You are an AI learning assistant helping students with their study materials. Be concise, helpful, and educational.',
-        };
+        // Build comprehensive system prompt for Claude
+        const systemPrompt = outputContent && outputType
+          ? `You are EduFlow AI, an advanced learning companion helping a student with their ${outputType}. 
+
+Current content:
+${JSON.stringify(outputContent, null, 2)}
+
+Your expertise:
+- Learning science (spaced repetition, active recall, retrieval practice)
+- Study strategies (Pomodoro, Cornell notes, SQ3R, Feynman technique)
+- Content optimization for educational materials
+- Personalized feedback and suggestions
+
+Help the student improve this content by providing specific, actionable advice. Be encouraging, clear, and educational.`
+          : `You are EduFlow AI, an advanced learning companion built into the EduFlow platform.
+
+Platform Knowledge:
+- Four AI Agents: Notes Generator, Flashcards Creator, Quiz Generator, Slides Extractor
+- Students upload files and create AI-powered study materials
+- Flow Canvas for visual workflow management
+
+Your Expertise:
+- Learning science and evidence-based study techniques
+- Platform guidance and feature explanations
+- Subject-specific academic help
+- Study strategies and time management
+
+Be concise, helpful, encouraging, and actionable. Match your tone to the student's needs.`;
 
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
@@ -129,12 +150,20 @@ Empower students to become self-directed learners who understand not just what t
             'X-Title': 'EduFlow AI',
           },
           body: JSON.stringify({
-            model: 'meta-llama/llama-3.1-8b-instruct:free',
-            messages: [systemMessage, ...messages],
+            model: 'anthropic/claude-3.5-sonnet', // Use Claude 3.5 Sonnet
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...messages.map(msg => ({
+                role: msg.role === 'assistant' ? 'assistant' : 'user',
+                content: msg.content,
+              })),
+            ],
           }),
         });
 
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('OpenRouter error response:', errorText);
           throw new Error(`OpenRouter API error: ${response.statusText}`);
         }
 
@@ -143,7 +172,7 @@ Empower students to become self-directed learners who understand not just what t
 
         return NextResponse.json({
           message: text,
-          provider: 'openrouter',
+          provider: 'anthropic/claude-3.5-sonnet',
         });
       } catch (openRouterError) {
         console.error('OpenRouter error:', openRouterError);
