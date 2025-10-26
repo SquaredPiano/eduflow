@@ -6,23 +6,21 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import {
   flashcardsToCsv,
   flashcardsToAnkiTxt,
   flashcardsToEnhancedAnki,
   notesToDocx,
-  notesToPdf,
+  // notesToPdf, // Temporarily disabled - requires puppeteer
   slidesToPptx,
-  slidesToPdf,
+  // slidesToPdf, // Temporarily disabled - requires puppeteer
   quizToCsv,
-  quizToPdf,
+  // quizToPdf, // Temporarily disabled - requires puppeteer
   quizToAnswerKeyCsv,
   SerializerResult,
 } from '@/services/serializers';
-
-const prisma = new PrismaClient();
 
 async function getSessionUser() {
   const cookieStore = await cookies();
@@ -194,7 +192,8 @@ async function generateNotesFile(
     case 'docx':
       return await notesToDocx(notesText, 'notes');
     case 'pdf':
-      return await notesToPdf(notesText, 'notes');
+      // return await notesToPdf(notesText, 'notes');
+      throw new Error('PDF export temporarily unavailable - use DOCX or Markdown instead');
     default:
       throw new Error(`Unsupported notes format: ${format}`);
   }
@@ -210,7 +209,8 @@ async function generateSlidesFile(
     case 'pptx':
       return await slidesToPptx(slides, 'presentation');
     case 'pdf':
-      return await slidesToPdf(slides, 'presentation');
+      // return await slidesToPdf(slides, 'presentation');
+      throw new Error('PDF export temporarily unavailable - use PPTX instead');
     default:
       throw new Error(`Unsupported slides format: ${format}`);
   }
@@ -228,7 +228,8 @@ async function generateQuizFile(
     case 'answer-key':
       return await quizToAnswerKeyCsv(quiz, 'quiz');
     case 'pdf':
-      return await quizToPdf(quiz, 'quiz');
+      // return await quizToPdf(quiz, 'quiz');
+      throw new Error('PDF export temporarily unavailable - use CSV instead');
     default:
       throw new Error(`Unsupported quiz format: ${format}`);
   }

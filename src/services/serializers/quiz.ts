@@ -57,7 +57,12 @@ export async function quizToPdf(
   quizData: Quiz | QuizQuestion[],
   title = 'quiz'
 ): Promise<SerializerResult> {
-  const htmlPdf = require('html-pdf-node');
+  // TODO: Re-implement with a Next.js compatible PDF library
+  throw new Error('PDF export temporarily unavailable - use CSV instead');
+  
+  /* Disabled due to html-pdf-node compatibility issues
+  // Dynamic import for server-side only dependencies
+  const htmlPdf = await import('html-pdf-node').then(m => m.default || m);
   
   // Normalize input to array of questions
   const questions: QuizQuestion[] = Array.isArray(quizData) ? quizData : quizData.questions;
@@ -88,6 +93,7 @@ export async function quizToPdf(
   } catch (error) {
     throw new Error(`Failed to generate quiz PDF: ${error instanceof Error ? error.message : String(error)}`);
   }
+  */
 }
 
 /**

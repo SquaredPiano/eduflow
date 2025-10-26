@@ -138,7 +138,12 @@ export async function notesToPdf(
   markdown: string,
   title = 'notes'
 ): Promise<SerializerResult> {
-  const htmlPdf = require('html-pdf-node');
+  // TODO: Re-implement with a Next.js compatible PDF library (jsPDF, PDFKit, or @react-pdf/renderer)
+  throw new Error('PDF export temporarily unavailable - use DOCX or Markdown instead');
+  
+  /* Disabled due to html-pdf-node compatibility issues with Next.js/Turbopack
+  // Dynamic import for server-side only dependencies
+  const htmlPdf = await import('html-pdf-node').then(m => m.default || m);
   
   // Convert markdown to HTML
   const html = markdownToHTML(markdown, title);
@@ -166,6 +171,7 @@ export async function notesToPdf(
   } catch (error) {
     throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : String(error)}`);
   }
+  */
 }
 
 // ============= Helper Functions =============
