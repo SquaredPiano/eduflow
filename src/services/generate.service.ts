@@ -56,14 +56,24 @@ export class GenerateService {
       [key: string]: any;
     }
   ): Promise<OutputEntity> {
+    console.log(`🎯 Starting generation: type=${type}, transcriptId=${transcriptId}`);
+    
     // Get the transcript from database
     const transcriptRecord = await prisma.transcript.findUnique({
       where: { id: transcriptId },
     });
 
     if (!transcriptRecord) {
+      console.error(`❌ Transcript not found: ${transcriptId}`);
       throw new Error(`Transcript not found: ${transcriptId}`);
     }
+
+    if (!transcriptRecord.content || transcriptRecord.content.trim().length === 0) {
+      console.error(`❌ Transcript is empty: ${transcriptId}`);
+      throw new Error('Transcript content is empty. Please ensure the file was properly processed.');
+    }
+
+    console.log(`✅ Transcript loaded: ${transcriptRecord.content.length} characters`);
 
     const transcript = new TranscriptEntity(
       transcriptRecord.id,
@@ -74,7 +84,8 @@ export class GenerateService {
     // Get the appropriate agent
     const agent = this.agents.get(type);
     if (!agent) {
-      throw new Error(`Unknown agent type: ${type}`);
+      console.error(`❌ Unknown agent type: ${type}`);
+      throw new Error(`Unknown agent type: ${type}. Supported types: ${Array.from(this.agents.keys()).join(', ')}`);
     }
 
     try {
@@ -89,19 +100,28 @@ export class GenerateService {
             : JSON.stringify(ctx.content, null, 2);
           agentContextText += '\n';
         }
+        console.log(`📎 Added context from ${options.agentContext.length} connected agents`);
       }
 
       // Prepare user context string if provided
       let userContextText = '';
       if (options?.userContext) {
         userContextText = `\n\n=== Additional Instructions ===\n${options.userContext}\n`;
+        console.log(`📝 Added user context: ${options.userContext.substring(0, 100)}...`);
       }
 
       // Process the transcript with the agent, including contexts
+      console.log(`🤖 Processing with ${type} agent...`);
       const content = await agent.process({
         transcript: transcript.text + agentContextText + userContextText,
         ...options,
       });
+
+      if (!content) {
+        throw new Error(`Agent returned empty content for type: ${type}`);
+      }
+
+      console.log(`✅ Agent processing complete`);
 
       // Calculate version number
       let version = 1;
@@ -111,6 +131,7 @@ export class GenerateService {
         });
         if (previousOutput) {
           version = (previousOutput.version || 1) + 1;
+          console.log(`📊 Creating version ${version} (regeneration)`);
         }
       }
 
@@ -127,6 +148,8 @@ export class GenerateService {
         },
       });
 
+      console.log(`💾 Output saved to database: ${outputRecord.id}`);
+
       return new OutputEntity(
         outputRecord.id,
         outputRecord.type as AgentType,
@@ -134,9 +157,24 @@ export class GenerateService {
         outputRecord.transcriptId || undefined
       );
     } catch (error) {
-      throw new Error(
-        `Failed to generate ${type}: ${error instanceof Error ? error.message : String(error)}`
-      );
+      console.error(`❌ Generation failed for ${type}:`, error);
+      
+      // Provide specific error messages
+      let errorMessage = `Failed to generate ${type}`;
+      
+      if (error instanceof Error) {
+        if (error.message.includes('API key')) {
+          errorMessage = 'AI API configuration error. Please check your API keys.';
+        } else if (error.message.includes('quota') || error.message.includes('rate limit')) {
+          errorMessage = `API rate limit exceeded. Please try again in a few moments.`;
+        } else if (error.message.includes('timeout')) {
+          errorMessage = `Generation timed out. The content might be too long. Try with a shorter file.`;
+        } else {
+          errorMessage = `${errorMessage}: ${error.message}`;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 
@@ -147,24 +185,37 @@ export class GenerateService {
    * @returns Array of successfully generated OutputEntity objects
    */
   async generateAll(transcriptId: string): Promise<OutputEntity[]> {
+    console.log(`🚀 Starting batch generation for transcript: ${transcriptId}`);
     const agentTypes = Array.from(this.agents.keys());
+    console.log(`📋 Generating ${agentTypes.length} output types: ${agentTypes.join(', ')}`);
 
+    const startTime = Date.now();
     const results = await Promise.allSettled(
       agentTypes.map((type) => this.generate(transcriptId, type))
     );
 
     // Filter successful results and log failures
     const outputs: OutputEntity[] = [];
+    const failures: string[] = [];
+    
     results.forEach((result, index) => {
+      const agentType = agentTypes[index];
       if (result.status === "fulfilled") {
         outputs.push(result.value);
+        console.log(`✅ ${agentType} generation succeeded`);
       } else {
-        console.error(
-          `Failed to generate ${agentTypes[index]}:`,
-          result.reason
-        );
+        const errorMsg = result.reason instanceof Error ? result.reason.message : String(result.reason);
+        console.error(`❌ ${agentType} generation failed:`, errorMsg);
+        failures.push(`${agentType}: ${errorMsg}`);
       }
     });
+
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`🏁 Batch generation complete: ${outputs.length}/${agentTypes.length} succeeded in ${duration}s`);
+    
+    if (failures.length > 0) {
+      console.warn(`⚠️ Some generations failed:\n${failures.join('\n')}`);
+    }
 
     return outputs;
   }
@@ -207,7 +258,7 @@ export class GenerateService {
     });
 
     return outputs.map(
-      (o) =>
+      (o: any) =>
         new OutputEntity(
           o.id,
           o.type as AgentType,

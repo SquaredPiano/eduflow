@@ -60,6 +60,11 @@ export function AgentSidebar({ isOpen, onClose }: AgentSidebarProps) {
     event.dataTransfer.setData('application/reactflow', agentType);
     event.dataTransfer.setData('agentLabel', agentLabel);
     event.dataTransfer.effectAllowed = 'move';
+    
+    // Close sidebar when dragging starts to prevent backdrop from blocking drop
+    setTimeout(() => {
+      onClose();
+    }, 100);
   };
 
   return (

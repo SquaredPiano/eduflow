@@ -10,14 +10,19 @@ export class TranscribeService {
   ) {}
 
   async transcribeFile(fileId: string): Promise<TranscriptEntity> {
+    console.log(`🎙️ Starting transcription for file: ${fileId}`);
+    
     // Get file from database
     const file = await this.prisma.file.findUnique({
       where: { id: fileId }
     });
 
     if (!file) {
+      console.error(`❌ File not found: ${fileId}`);
       throw new Error(`File not found: ${fileId}`);
     }
+
+    console.log(`📁 File found: ${file.name} (${file.type})`);
 
     // Check if file is audio/video
     const audioVideoTypes = [
@@ -26,7 +31,8 @@ export class TranscribeService {
     ];
 
     if (!audioVideoTypes.includes(file.type)) {
-      throw new Error(`File type ${file.type} is not audio/video`);
+      console.error(`❌ Invalid file type: ${file.type}`);
+      throw new Error(`File type ${file.type} is not audio/video. Supported formats: MP3, WAV, M4A, MP4, WebM, QuickTime`);
     }
 
     // Check if transcript already exists
@@ -35,6 +41,7 @@ export class TranscribeService {
     });
 
     if (existingTranscript) {
+      console.log(`✅ Transcript already exists: ${existingTranscript.id}`);
       return new TranscriptEntity(
         existingTranscript.id,
         existingTranscript.fileId,
@@ -51,22 +58,54 @@ export class TranscribeService {
       file.url
     );
 
-    // Transcribe using ElevenLabs
-    const transcriptEntity = await this.transcriber.transcribe({ file: fileEntity });
+    try {
+      // Transcribe using ElevenLabs
+      console.log(`🎯 Calling ElevenLabs transcription service...`);
+      const transcriptEntity = await this.transcriber.transcribe({ file: fileEntity });
 
-    // Save transcript to database
-    const transcript = await this.prisma.transcript.create({
-      data: {
-        content: transcriptEntity.text,
-        fileId: file.id,
+      if (!transcriptEntity || !transcriptEntity.text || transcriptEntity.text.trim().length === 0) {
+        throw new Error('Transcription returned empty content');
       }
-    });
 
-    return new TranscriptEntity(
-      transcript.id,
-      transcript.fileId,
-      transcript.content
-    );
+      console.log(`✅ Transcription complete: ${transcriptEntity.text.length} characters`);
+
+      // Save transcript to database
+      const transcript = await this.prisma.transcript.create({
+        data: {
+          content: transcriptEntity.text,
+          fileId: file.id,
+        }
+      });
+
+      console.log(`💾 Transcript saved to database: ${transcript.id}`);
+
+      return new TranscriptEntity(
+        transcript.id,
+        transcript.fileId,
+        transcript.content
+      );
+    } catch (error) {
+      console.error(`❌ Transcription failed for ${file.name}:`, error);
+      
+      // Provide specific error messages
+      let errorMessage = 'Transcription failed';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('API key') || error.message.includes('unauthorized')) {
+          errorMessage = 'ElevenLabs API authentication error. Please check your API key.';
+        } else if (error.message.includes('quota') || error.message.includes('credits')) {
+          errorMessage = 'ElevenLabs API quota exceeded. Please check your account credits.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Transcription timed out. The audio file might be too long.';
+        } else if (error.message.includes('format') || error.message.includes('codec')) {
+          errorMessage = 'Audio format not supported. Please try converting to MP3 or WAV.';
+        } else {
+          errorMessage = `${errorMessage}: ${error.message}`;
+        }
+      }
+      
+      throw new Error(errorMessage);
+    }
   }
 
   async getTranscript(transcriptId: string): Promise<TranscriptEntity | null> {

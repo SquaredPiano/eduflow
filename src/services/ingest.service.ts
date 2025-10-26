@@ -42,7 +42,8 @@ export class IngestService {
     userId: string,
     courseId?: string
   ): Promise<FileEntity> {
-    console.log(`📥 Processing file: ${fileName} (${fileType})`);
+    console.log(`📥 [INGEST] Processing file: ${fileName}`);
+    console.log(`📋 [INGEST] Type: ${fileType}, Size: ${(fileSize / 1024).toFixed(2)} KB`);
 
     try {
       // 1. Save file metadata to database first
@@ -58,7 +59,7 @@ export class IngestService {
         },
       });
 
-      console.log(`✅ File saved to database with ID: ${file.id}`);
+      console.log(`✅ [INGEST] File saved to database with ID: ${file.id}`);
 
       // 2. Extract text based on file type
       let extractedText: string | null = null;
@@ -66,26 +67,41 @@ export class IngestService {
       try {
         switch (fileType) {
           case 'application/pdf':
+            console.log(`📄 [INGEST] Extracting text from PDF...`);
             extractedText = await this.textExtractor.extractFromPDF(fileUrl);
             break;
           case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+            console.log(`📊 [INGEST] Extracting text from PPTX...`);
             extractedText = await this.textExtractor.extractFromPPTX(fileUrl);
             break;
           case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+            console.log(`📝 [INGEST] Extracting text from DOCX...`);
             extractedText = await this.textExtractor.extractFromDOCX(fileUrl);
             break;
           case 'video/mp4':
           case 'audio/mpeg':
           case 'audio/mp3':
-            // Video and audio files will be handled by transcription service (Phase 3)
-            console.log(`🎬 Video/audio file detected - will be transcribed in Phase 3`);
+          case 'audio/wav':
+          case 'audio/m4a':
+          case 'video/webm':
+          case 'video/quicktime':
+            // Video and audio files will be handled by transcription service
+            console.log(`🎬 [INGEST] Audio/video file detected - will be transcribed separately`);
             break;
           default:
-            console.log(`ℹ️ Unsupported file type for text extraction: ${fileType}`);
+            console.log(`ℹ️ [INGEST] Unsupported file type for text extraction: ${fileType}`);
         }
       } catch (extractionError) {
-        console.error(`⚠️ Text extraction failed for ${fileName}:`, extractionError);
-        // Don't fail the entire operation if extraction fails
+        console.error(`⚠️ [INGEST] Text extraction failed for ${fileName}:`, extractionError);
+        
+        // Provide helpful error context but don't fail the entire operation
+        const errorMsg = extractionError instanceof Error ? extractionError.message : 'Unknown error';
+        if (errorMsg.includes('password') || errorMsg.includes('encrypted')) {
+          console.error(`🔒 [INGEST] File appears to be password-protected or encrypted`);
+        } else if (errorMsg.includes('corrupted') || errorMsg.includes('invalid')) {
+          console.error(`💥 [INGEST] File appears to be corrupted or invalid`);
+        }
+        
         // The file is still saved, just without a transcript
       }
 
@@ -98,8 +114,12 @@ export class IngestService {
           },
         });
 
-        console.log(`📝 Transcript created for file ${file.id} (${extractedText.length} characters)`);
+        console.log(`� [INGEST] Transcript created for file ${file.id} (${extractedText.length} characters)`);
+      } else if (!['video/mp4', 'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'video/webm', 'video/quicktime'].includes(fileType)) {
+        console.warn(`⚠️ [INGEST] No text content extracted from ${fileName}`);
       }
+
+      console.log(`🎉 [INGEST] File processing complete: ${file.id}`);
 
       // 4. Return FileEntity
       return new FileEntity(
@@ -111,10 +131,24 @@ export class IngestService {
       );
 
     } catch (error) {
-      console.error(`❌ Failed to process file ${fileName}:`, error);
-      throw new Error(
-        `Failed to ingest file: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      console.error(`❌ [INGEST] Failed to process file ${fileName}:`, error);
+      
+      // Provide specific error messages
+      let errorMessage = 'Failed to process file';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('unique constraint') || error.message.includes('duplicate')) {
+          errorMessage = 'A file with this name already exists in this project.';
+        } else if (error.message.includes('foreign key')) {
+          errorMessage = 'Invalid user or project reference. Please refresh and try again.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'File processing timed out. The file might be too large.';
+        } else {
+          errorMessage = `${errorMessage}: ${error.message}`;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 

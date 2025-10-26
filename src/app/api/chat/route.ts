@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       try {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
         const model = genAI.getGenerativeModel({ 
-          model: 'gemini-2.0-flash-exp',
+          model: 'gemini-2.5-flash', // Use Gemini 2.5 Flash model
           systemInstruction: `You are EduFlow AI, an advanced learning companion and expert educational assistant built into the EduFlow platform.
 
 **Your Core Identity:**
@@ -102,10 +102,16 @@ Empower students to become self-directed learners who understand not just what t
 
         return NextResponse.json({
           message: text,
-          provider: 'gemini-2.0-flash-exp',
+          provider: 'gemini-2.5-flash',
         });
       } catch (geminiError) {
         console.error('Gemini error, falling back to OpenRouter:', geminiError);
+        console.error('Gemini error details:', geminiError instanceof Error ? geminiError.message : String(geminiError));
+        
+        // If no OpenRouter key, throw the Gemini error
+        if (!openRouterApiKey) {
+          throw new Error(`Gemini API failed: ${geminiError instanceof Error ? geminiError.message : 'Unknown error'}`);
+        }
       }
     }
 

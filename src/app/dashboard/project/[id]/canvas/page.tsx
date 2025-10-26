@@ -150,93 +150,8 @@ export default function CanvasPage() {
       },
     }));
 
-    // AI Agent nodes - Education types only
-    const agentNodes: Node[] = [
-      {
-        id: 'agent-notes',
-        type: 'agentNode',
-        position: { x: 500, y: 100 },
-        data: {
-          type: 'notes',
-          label: 'Notes Generator',
-          draft: project.outputs.find((o) => o.type === 'notes')?.content?.content || '',
-          status: project.outputs.find((o) => o.type === 'notes')?.status || 'idle',
-          outputId: project.outputs.find((o) => o.type === 'notes')?.id,
-          connections: fileNodes.map((n) => n.id),
-          onGenerate: () => handleGenerate('notes'),
-          onView: () => handleViewOutput('notes'),
-          onChat: () => console.log('Chat with notes agent'),
-          onRegenerate: () => handleOpenRegenerateDialog('notes'),
-          onDownload: (format?: string) => {
-            const outputId = project.outputs.find((o) => o.type === 'notes')?.id;
-            if (outputId) handleDownloadOutput(outputId, (format as any) || 'pdf');
-          },
-        },
-      },
-      {
-        id: 'agent-flashcards',
-        type: 'agentNode',
-        position: { x: 500, y: 320 },
-        data: {
-          type: 'flashcards',
-          label: 'Flashcards Creator',
-          draft: project.outputs.find((o) => o.type === 'flashcards')?.content?.cards?.[0]?.front || '',
-          status: project.outputs.find((o) => o.type === 'flashcards')?.status || 'idle',
-          outputId: project.outputs.find((o) => o.type === 'flashcards')?.id,
-          connections: fileNodes.map((n) => n.id),
-          onGenerate: () => handleGenerate('flashcards'),
-          onView: () => handleViewOutput('flashcards'),
-          onChat: () => console.log('Chat with flashcards agent'),
-          onRegenerate: () => handleOpenRegenerateDialog('flashcards'),
-          onDownload: (format?: string) => {
-            const outputId = project.outputs.find((o) => o.type === 'flashcards')?.id;
-            if (outputId) handleDownloadOutput(outputId, (format as any) || 'anki');
-          },
-        },
-      },
-      {
-        id: 'agent-quiz',
-        type: 'agentNode',
-        position: { x: 500, y: 540 },
-        data: {
-          type: 'quiz',
-          label: 'Quiz Generator',
-          draft: project.outputs.find((o) => o.type === 'quiz')?.content?.questions?.[0]?.question || '',
-          status: project.outputs.find((o) => o.type === 'quiz')?.status || 'idle',
-          outputId: project.outputs.find((o) => o.type === 'quiz')?.id,
-          connections: fileNodes.map((n) => n.id),
-          onGenerate: () => handleGenerate('quiz'),
-          onView: () => handleViewOutput('quiz'),
-          onChat: () => console.log('Chat with quiz agent'),
-          onRegenerate: () => handleOpenRegenerateDialog('quiz'),
-          onDownload: (format?: string) => {
-            const outputId = project.outputs.find((o) => o.type === 'quiz')?.id;
-            if (outputId) handleDownloadOutput(outputId, (format as any) || 'csv');
-          },
-        },
-      },
-      {
-        id: 'agent-slides',
-        type: 'agentNode',
-        position: { x: 500, y: 760 },
-        data: {
-          type: 'slides',
-          label: 'Slides Extractor',
-          draft: project.outputs.find((o) => o.type === 'slides')?.content?.slides?.[0]?.title || '',
-          status: project.outputs.find((o) => o.type === 'slides')?.status || 'idle',
-          outputId: project.outputs.find((o) => o.type === 'slides')?.id,
-          connections: fileNodes.map((n) => n.id),
-          onGenerate: () => handleGenerate('slides'),
-          onView: () => handleViewOutput('slides'),
-          onChat: () => console.log('Chat with slides agent'),
-          onRegenerate: () => handleOpenRegenerateDialog('slides'),
-          onDownload: (format?: string) => {
-            const outputId = project.outputs.find((o) => o.type === 'slides')?.id;
-            if (outputId) handleDownloadOutput(outputId, (format as any) || 'pptx');
-          },
-        },
-      },
-    ];
+    // Don't create default agent nodes - let users drag them from sidebar
+    const agentNodes: Node[] = [];
 
     const outputNodes: Node[] = project.outputs.map((output, index) => ({
       id: `output-${output.id}`,
@@ -324,18 +239,22 @@ export default function CanvasPage() {
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
+      event.stopPropagation();
 
       const agentType = event.dataTransfer.getData('application/reactflow');
       const agentLabel = event.dataTransfer.getData('agentLabel');
 
+      console.log('Drop event:', { agentType, agentLabel, hasInstance: !!reactFlowInstance });
+
       if (!agentType || !agentLabel) {
         console.warn('Missing agent type or label in drag data');
+        toast.error('Failed to add agent - please try again');
         return;
       }
 
       if (!reactFlowInstance) {
         console.warn('ReactFlow instance not initialized yet');
-        toast.error('Canvas not ready - please try again');
+        toast.error('Canvas not ready - please wait a moment and try again');
         return;
       }
 
@@ -345,7 +264,7 @@ export default function CanvasPage() {
         y: event.clientY,
       });
 
-      const newNodeId = `agent-${agentType}-${nodeId}`;
+      const newNodeId = `agent-${agentType}-${Date.now()}`;
       const newNode: Node = {
         id: newNodeId,
         type: 'agentNode',
@@ -359,6 +278,13 @@ export default function CanvasPage() {
           onGenerate: () => handleGenerate(agentType),
           onView: () => handleViewOutput(agentType),
           onChat: () => console.log(`Chat with ${agentType} agent`),
+          onRegenerate: () => handleOpenRegenerateDialog(agentType as any),
+          onDownload: (format?: string) => {
+            const output = project?.outputs.find((o) => o.type === agentType);
+            if (output?.id) {
+              handleDownloadOutput(output.id, (format as any));
+            }
+          },
         },
       };
 
@@ -380,7 +306,7 @@ export default function CanvasPage() {
         }
       }, 50);
     },
-    [reactFlowInstance, nodeId, setNodes]
+    [reactFlowInstance, nodeId, setNodes, project]
   );
 
   const handleGenerate = async (type: string) => {

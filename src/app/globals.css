@@ -59,9 +59,9 @@
     --primary-light: #dbeafe;
     
     /* Secondary/Accent: Green - Growth, Success, Focus */
-    --secondary: #0b8e16; /* Vibrant green for accents */
+    --secondary: #10b981; /* Emerald green for accents */
     --secondary-foreground: #ffffff;
-    --secondary-hover: #0a7514;
+    --secondary-hover: #059669;
     --secondary-light: #d1fae5;
     
     /* Neutral: Gray - Professional, Clean */
@@ -73,7 +73,7 @@
     /* Semantic Colors */
     --destructive: #ef4444; /* Red for errors */
     --destructive-foreground: #ffffff;
-    --success: #0b8e16; /* Green for success states */
+    --success: #10b981; /* Emerald green for success states */
     --warning: #f59e0b; /* Orange for warnings */
     --info: #3b82f6; /* Blue for info */
     
