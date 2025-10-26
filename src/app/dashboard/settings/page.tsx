@@ -1,11 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { User, Mail, Key, LogOut, Trash2 } from 'lucide-react';
+import { User, Mail, Key, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Link from 'next/link';
 
 interface UserData {
   user: {
@@ -129,33 +128,20 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Account Actions */}
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          {/* Danger Zone */}
+          <div className="rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
-              <LogOut className="h-5 w-5 text-gray-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Account Actions</h2>
+              <Trash2 className="h-5 w-5 text-red-600" />
+              <h2 className="text-xl font-semibold text-red-900">Danger Zone</h2>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div>
-                  <h3 className="font-medium text-gray-900">Sign Out</h3>
-                  <p className="text-sm text-gray-600">Sign out of your account</p>
-                </div>
-                <Link href="/api/auth/logout">
-                  <Button variant="outline" className="border-gray-300">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </Button>
-                </Link>
-              </div>
-
               <div className="flex items-center justify-between py-3">
                 <div>
                   <h3 className="font-medium text-red-600">Delete Account</h3>
-                  <p className="text-sm text-gray-600">Permanently delete your account and all data</p>
+                  <p className="text-sm text-gray-700">Permanently delete your account and all data. This action cannot be undone.</p>
                 </div>
-                <Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
+                <Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-100">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Account
                 </Button>
