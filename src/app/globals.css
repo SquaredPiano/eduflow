@@ -67,8 +67,8 @@
     --muted: #F3F4F6; /* Gray 100 */
     --muted-foreground: #6B7280; /* Gray 500 */
     
-    /* Accent: Green #10B981 - Success & Growth (10% usage) */
-    --accent: #10B981; /* Green 500 - like GeeksforGeeks/W3Schools */
+    /* Accent: Green #0b8e16 - Success & Growth (10% usage) */
+    --accent: #0b8e16; /* Custom green - educational trust */
     --accent-foreground: #ffffff;
     
     /* Destructive: Red for errors */
@@ -82,7 +82,7 @@
     
     /* Chart Colors - Educational theme */
     --chart-1: #3B82F6; /* Blue - primary data */
-    --chart-2: #10B981; /* Green - growth/success */
+    --chart-2: #0b8e16; /* Green - growth/success */
     --chart-3: #F59E0B; /* Amber - warnings */
     --chart-4: #8B5CF6; /* Violet - secondary data */
     --chart-5: #EC4899; /* Pink - highlights */

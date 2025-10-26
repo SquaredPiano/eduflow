@@ -4,12 +4,21 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { FileText, Zap, BookOpen, Brain, Upload, ArrowRight, CheckCircle, Sparkles } from "lucide-react"
+import { useFadeInScroll, useSlideInLeft, useSlideInRight, useStaggerChildren } from "@/hooks/useScrollAnimation"
+import { ThreeBackground } from "@/components/three/ThreeBackground"
 
 export default function KhanInspiredLandingPage() {
+  // Animation refs
+  const heroTitleRef = useFadeInScroll(1.2);
+  const heroDescRef = useSlideInLeft(1);
+  const heroImageRef = useSlideInRight(1);
+  const featuresRef = useStaggerChildren(0.6, 0.15);
+  const stepsRef = useStaggerChildren(0.8, 0.2);
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       {/* Clean Navigation */}
-      <header className="border-b border-border">
+      <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur-sm z-50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
@@ -38,15 +47,16 @@ export default function KhanInspiredLandingPage() {
         </div>
       </header>
 
-      {/* Hero Section - Khan Academy inspired */}
-      <section className="py-20 md:py-32">
+      {/* Hero Section - Khan Academy inspired with Three.js */}
+      <section className="py-20 md:py-32 relative overflow-hidden">
+        <ThreeBackground />
         <div className="container mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <h1 className="text-5xl md:text-6xl font-bold leading-tight text-foreground">
+              <h1 ref={heroTitleRef} className="text-5xl md:text-6xl font-bold leading-tight text-foreground">
                 Learn anything with AI-powered study tools
               </h1>
-              <p className="text-xl text-muted-foreground leading-relaxed">
+              <p ref={heroDescRef} className="text-xl text-muted-foreground leading-relaxed">
                 Transform your lectures, documents, and videos into comprehensive study materials. Generate notes, flashcards, and quizzes instantly.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
