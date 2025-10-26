@@ -91,14 +91,14 @@ OPENROUTER_API_KEY="your_openrouter_api_key_here"
 
 ```bash
 # Connection Pooling (for app queries)
-DATABASE_URL="postgresql://postgres.fjtwqbaoxwootphwtjgw:QidCJKHI4s0e17XK@aws-1-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DATABASE_URL="postgresql://postgres.PROJECT_REF:YOUR_DATABASE_PASSWORD@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
 
 # Direct Connection (for migrations)
-DIRECT_URL="postgresql://postgres.fjtwqbaoxwootphwtjgw:QidCJKHI4s0e17XK@aws-1-us-east-2.pooler.supabase.com:5432/postgres"
+DIRECT_URL="postgresql://postgres.PROJECT_REF:YOUR_DATABASE_PASSWORD@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
 
 # Supabase API
-NEXT_PUBLIC_SUPABASE_URL="https://fjtwqbaoxwootphwtjgw.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqdHdxYmFveHdvb3RwaHd0amd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzOTgyMzIsImV4cCI6MjA3Njk3NDIzMn0.BoCogt0Rp9aVFi7WQ_sTJ1EiwVl7VLMGTDudZgMPipw"
+NEXT_PUBLIC_SUPABASE_URL="https://your-project-ref.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key_here"
 ```
 
 **Why Two URLs?**
@@ -271,7 +271,7 @@ model: "gemini-2.5-flash" // ✅ Working model
 Quick links to manage your services:
 
 - **Auth0**: https://manage.auth0.com/dashboard
-- **Supabase**: https://supabase.com/dashboard/project/fjtwqbaoxwootphwtjgw
+- **Supabase**: https://supabase.com/dashboard/project/YOUR_PROJECT_REF
 - **UploadThing**: https://uploadthing.com/dashboard
 - **ElevenLabs**: https://elevenlabs.io/app/settings/api-keys
 - **Google AI Studio**: https://makersuite.google.com/app/apikey
