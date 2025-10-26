@@ -150,3 +150,4 @@ export function FileList({ files, onDelete, isLoading = false }: FileListProps) 
     </div>
   );
 }
+
