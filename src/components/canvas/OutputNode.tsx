@@ -2,7 +2,6 @@
 
 import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import type { NodeProps } from '@xyflow/react';
 import { FileCheck, Download } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,8 +13,11 @@ interface OutputNodeData {
   content: any;
 }
 
-function OutputNode({ data }: NodeProps) {
-  const nodeData = data as OutputNodeData;
+interface OutputNodeProps {
+  data: OutputNodeData;
+}
+
+function OutputNode({ data }: OutputNodeProps) {
   
   return (
     <>
@@ -28,10 +30,10 @@ function OutputNode({ data }: NodeProps) {
         <div className="p-3 space-y-2">
           <div className="flex items-center gap-2 text-purple-600">
             <FileCheck className="h-5 w-5" />
-            <div className="font-semibold text-sm">{nodeData.label}</div>
+            <div className="font-semibold text-sm">{data.label}</div>
           </div>
           <div className="text-xs text-muted-foreground capitalize">
-            {nodeData.outputType} Generated
+            {data.outputType} Generated
           </div>
           <Button variant="ghost" size="sm" className="w-full">
             <Download className="mr-2 h-3 w-3" />

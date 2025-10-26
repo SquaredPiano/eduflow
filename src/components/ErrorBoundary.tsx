@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { AlertCircle, RefreshCw, Home } from "lucide-react";
 
 interface ErrorBoundaryState {
