@@ -21,9 +21,12 @@ import {
   BookText,
   GraduationCap,
   FileQuestion,
-  Presentation
+  Presentation,
+  ExternalLink,
+  CloudDownload
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ImportCanvasWizard } from '@/components/canvas/ImportCanvasWizard';
 
 interface File {
   id: string;
@@ -59,6 +62,7 @@ export default function ProjectDetailPage() {
   const projectId = params?.id as string;
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('files');
+  const [showImportWizard, setShowImportWizard] = useState(false);
 
   // Fetch project data
   const { data: project, isLoading, error } = useQuery<ProjectData>({
@@ -206,10 +210,20 @@ export default function ProjectDetailPage() {
                     Drag and drop files here or click to browse
                   </p>
                 </div>
-                <Button className="bg-primary hover:bg-primary/90 text-white">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Choose Files
-                </Button>
+                <div className="flex gap-2 justify-center">
+                  <Button className="bg-primary hover:bg-primary/90 text-white">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Choose Files
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="border-secondary/30 hover:bg-secondary/10"
+                    onClick={() => setShowImportWizard(true)}
+                  >
+                    <CloudDownload className="mr-2 h-4 w-4" />
+                    Import from Canvas
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -367,15 +381,38 @@ export default function ProjectDetailPage() {
 
         {/* Canvas View Tab */}
         <TabsContent value="canvas" className="space-y-4">
-          <Card className="p-12 text-center">
-            <GraduationCap className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="font-semibold mb-2">Canvas View Coming Soon</h3>
-            <p className="text-muted-foreground text-sm">
-              Visualize your learning flow with an interactive canvas
-            </p>
+          <Card className="border-2 border-primary/20">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="flex justify-center">
+                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <GraduationCap className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Interactive Learning Flow Canvas</h3>
+                  <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                    Visualize your learning journey with our interactive canvas. See how your files connect to AI-generated content in a beautiful flow diagram.
+                  </p>
+                </div>
+                <Link href={`/dashboard/project/${projectId}/canvas`}>
+                  <Button className="bg-primary hover:bg-primary/90 text-white">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Open Flow Canvas
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Import Canvas Wizard */}
+      <ImportCanvasWizard
+        open={showImportWizard}
+        onOpenChange={setShowImportWizard}
+        projectId={projectId}
+      />
     </div>
   );
 }
