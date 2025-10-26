@@ -25,7 +25,11 @@ This guide explains the standardized environment configuration for EduFlow AI, c
 
 ```bash
 # Auth0 Configuration
+<<<<<<< HEAD
+AUTH0_SECRET="ab8e0f456d82ffeb67b755ceba9ec0e6e3cbec45fcf7382fb140f183acc053e7"
+=======
 AUTH0_SECRET="use [generate-secret.ts] to create your own secret"
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 APP_BASE_URL="http://localhost:3000/"
 AUTH0_BASE_URL="http://localhost:3000"
 AUTH0_CALLBACK_URL="http://localhost:3000/auth/callback"
@@ -33,7 +37,11 @@ AUTH0_LOGOUT_URL="http://localhost:3000/"
 AUTH0_DOMAIN="eduflow.ca.auth0.com"
 AUTH0_ISSUER_BASE_URL="https://eduflow.ca.auth0.com"
 AUTH0_CLIENT_ID="aSrXCRFxeNUyqBCqIkYfFwYCgazRmqMX"
+<<<<<<< HEAD
+AUTH0_CLIENT_SECRET="Sg_7wGNllPAQICos8C6MhLd8LhDegSQqe7j6UJ9muxbLSw-NMTpF7E2-XYg9l1YX"
+=======
 AUTH0_CLIENT_SECRET="your_auth0_client_secret_here"
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 AUTH0_AUDIENCE="https://eduflow.ca.auth0.com/api/v2/"
 ```
 
@@ -47,7 +55,11 @@ AUTH0_AUDIENCE="https://eduflow.ca.auth0.com/api/v2/"
 
 ```bash
 # UploadThing Configuration
+<<<<<<< HEAD
+UPLOADTHING_TOKEN="eyJhcGlLZXkiOiJza19saXZlXzM1M2Y2N2ViYzMwOGM2NjE4YTU1Nzc3MDczNjQ4YTcwOWQ4YTk4MzAzZGI3ZWI4ZmVlYWE5ODAyMWNiMWE4YjgiLCJhcHBJZCI6IjhveWp3bmluZXkiLCJyZWdpb25zIjpbInNlYTEiXX0="
+=======
 UPLOADTHING_TOKEN="your_uploadthing_token_here"
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 ```
 
 **Configured Features**:
@@ -60,7 +72,11 @@ UPLOADTHING_TOKEN="your_uploadthing_token_here"
 
 ```bash
 # ElevenLabs Configuration
+<<<<<<< HEAD
+ELEVENLABS_API_KEY="sk_efa49889e14345ef921c30dcff9a7cfa2e157674b2b42801"
+=======
 ELEVENLABS_API_KEY="your_elevenlabs_api_key_here"
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 ```
 
 **Configured Features**:
@@ -73,10 +89,17 @@ ELEVENLABS_API_KEY="your_elevenlabs_api_key_here"
 
 ```bash
 # Gemini API Configuration
+<<<<<<< HEAD
+GEMINI_API_KEY="AIzaSyCre-scQZuPkS7ndveHg698nE8aqrgu9As"
+
+# OpenRouter (Fallback)
+OPENROUTER_API_KEY="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"
+=======
 GEMINI_API_KEY="your_gemini_api_key_here"
 
 # OpenRouter (Fallback)
 OPENROUTER_API_KEY="your_openrouter_api_key_here"
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 ```
 
 **Configured Features**:
@@ -115,7 +138,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key_here"
 # Not yet configured - placeholders only
 DROPLET_HOST="your-droplet-ip-here"
 DROPLET_USER="root"
+<<<<<<< HEAD
+DROPLET_PASSWORD="Edu0Flow.Study"
+=======
 DROPLET_PASSWORD="your_droplet_password_here"
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 WHISPER_API_URL="http://your-droplet-ip:8000"
 ```
 

@@ -30,7 +30,7 @@ export class IngestService {
    * @param fileKey - UploadThing file key (for deletion)
    * @param fileSize - File size in bytes
    * @param userId - Database user ID (not Auth0 ID)
-   * @param courseId - Optional course ID to associate the file with
+   * @param projectId - Project ID to associate the file with
    * @returns FileEntity representing the processed file
    */
   async processFile(
@@ -40,7 +40,7 @@ export class IngestService {
     fileKey: string,
     fileSize: number,
     userId: string,
-    courseId?: string
+    projectId: string
   ): Promise<FileEntity> {
     console.log(`📥 Processing file: ${fileName} (${fileType})`);
 
@@ -53,8 +53,7 @@ export class IngestService {
           url: fileUrl,
           key: fileKey,
           size: fileSize,
-          userId: userId,
-          courseId: courseId,
+          projectId: projectId,
         },
       });
 
@@ -133,16 +132,14 @@ export class IngestService {
   }
 
   /**
-   * Get all files for a user
-   * @param userId - Database user ID
-   * @param courseId - Optional course ID to filter by
+   * Get all files for a project
+   * @param projectId - Project ID
    * @returns Array of files with transcripts
    */
-  async getUserFiles(userId: string, courseId?: string) {
+  async getProjectFiles(projectId: string) {
     return this.prisma.file.findMany({
       where: {
-        userId: userId,
-        ...(courseId && { courseId }),
+        projectId: projectId,
       },
       include: {
         transcripts: true,
@@ -182,3 +179,4 @@ export async function ingestFile(_input: {
   const id = Math.random().toString(36).slice(2);
   return new FileEntity(id, _input.name, _input.mimeType, _input.size, _input.url);
 }
+

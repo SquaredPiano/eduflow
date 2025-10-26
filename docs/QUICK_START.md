@@ -48,7 +48,11 @@ Visit: http://localhost:3000
 ### SSH into Droplet
 ```powershell
 ssh root@your-droplet-ip
+<<<<<<< HEAD
+# Password: Edu0Flow.Study
+=======
 # Password: your_droplet_password_here
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 ```
 
 ### Install Dependencies
