@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth0 } from './auth0'
+import { Auth0Client } from '@auth0/nextjs-auth0/server'
 import { getUserByAuth0Id } from './userSync'
+
+const auth0 = new Auth0Client({
+  domain: process.env.AUTH0_ISSUER_BASE_URL?.replace(/^https?:\/\//, '') || '',
+  clientId: process.env.AUTH0_CLIENT_ID!,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+  appBaseUrl: process.env.AUTH0_BASE_URL!,
+  secret: process.env.AUTH0_SECRET!,
+});
 
 /**
  * API Authentication Helpers
@@ -17,7 +25,7 @@ import { getUserByAuth0Id } from './userSync'
 export async function getAuthenticatedUser(request: NextRequest) {
   try {
     // Get session from Auth0
-    const session = await auth0.getSession(request)
+    const session = await auth0.getSession()
     
     if (!session?.user?.sub) {
       return null

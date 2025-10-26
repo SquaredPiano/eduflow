@@ -1,24 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Lato } from "next/font/google";
 import "@uploadthing/react/styles.css";
 import "./globals.css";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "@/app/api/uploadthing/core";
-import { AuthProvider } from "@/providers/AuthProvider";
+import { Providers } from "@/providers/Providers";
+import { Toaster } from "sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const lato = Lato({
+  weight: ['300', '400', '700', '900'],
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-lato",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Eduflow - AI-Powered Learning Platform",
+  title: "EduFlow - AI-Powered Learning Platform",
   description: "Transform your educational content with AI-powered transcription, notes, and flashcards",
 };
 
@@ -29,21 +27,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <AuthProvider>
+      <body className={`${lato.variable} font-sans antialiased`}>
+        <Providers>
           <NextSSRPlugin
-            /**
-             * The `extractRouterConfig` will extract **only** the route configs
-             * from the router to prevent additional information from being
-             * leaked to the client. The data passed to the client is the same
-             * as if you were to fetch `/api/uploadthing` directly.
-             */
             routerConfig={extractRouterConfig(ourFileRouter)}
           />
           {children}
-        </AuthProvider>
+          <Toaster position="bottom-right" />
+        </Providers>
       </body>
     </html>
   );

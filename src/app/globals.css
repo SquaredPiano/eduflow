@@ -44,64 +44,103 @@
 }
 
 :root {
-    /* Apple Light Theme Colors */
-    --background: #ffffff;
-    --foreground: #000000;
+    /* EduFlow Educational Theme - Blue & Green */
+    --background: #faf9f6; /* Alabaster - soft white for reduced eye strain */
+    --foreground: #1f2937; /* Slate - clear readable text */
     --card: #ffffff;
-    --card-foreground: #000000;
+    --card-foreground: #1f2937;
     --popover: #ffffff;
-    --popover-foreground: #000000;
-    --primary: #0071e3; /* Apple Blue */
+    --popover-foreground: #1f2937;
+    
+    /* Primary: Blue - Trust, Intelligence, Stability */
+    --primary: #3b82f6; /* Cool Blue - main brand color */
     --primary-foreground: #ffffff;
-    --secondary: #f5f5f7; /* Apple Light Gray */
-    --secondary-foreground: #1d1d1f;
-    --muted: #f5f5f7;
-    --muted-foreground: #86868b;
-    --accent: #0071e3; /* Apple Blue */
-    --accent-foreground: #ffffff;
-    --destructive: #ff3b30; /* Apple Red */
+    --primary-hover: #2563eb;
+    --primary-light: #dbeafe;
+    
+    /* Secondary/Accent: Green - Growth, Success, Focus */
+    --secondary: #0b8e16; /* Vibrant green for accents */
+    --secondary-foreground: #ffffff;
+    --secondary-hover: #0a7514;
+    --secondary-light: #d1fae5;
+    
+    /* Neutral: Gray - Professional, Clean */
+    --muted: #f9fafb; /* Light gray background */
+    --muted-foreground: #6b7280; /* Medium gray text */
+    --accent: #f3f4f6; /* Very light gray for hover */
+    --accent-foreground: #1f2937;
+    
+    /* Semantic Colors */
+    --destructive: #ef4444; /* Red for errors */
     --destructive-foreground: #ffffff;
-    --border: #e2e2e7; /* Lighter, more subtle border */
-    --input: #f5f5f7;
-    --ring: #0071e3;
-    --chart-1: #0071e3; /* Apple Blue */
-    --chart-2: #34c759; /* Apple Green */
-    --chart-3: #ff9500; /* Apple Orange */
-    --chart-4: #ffcc00; /* Apple Yellow */
-    --chart-5: #af52de; /* Apple Purple */
-    --sidebar: #f5f5f7;
-    --sidebar-foreground: #1d1d1f;
-    --sidebar-primary: #0071e3;
+    --success: #0b8e16; /* Green for success states */
+    --warning: #f59e0b; /* Orange for warnings */
+    --info: #3b82f6; /* Blue for info */
+    
+    /* UI Elements */
+    --border: #e5e7eb; /* Light gray border */
+    --input: #f9fafb;
+    --ring: #3b82f6; /* Blue focus ring */
+    
+    /* Charts & Data Visualization */
+    --chart-1: #3b82f6; /* Blue */
+    --chart-2: #0b8e16; /* Green */
+    --chart-3: #8b5cf6; /* Purple */
+    --chart-4: #f59e0b; /* Orange */
+    --chart-5: #ec4899; /* Pink */
+    
+    /* Sidebar (60-30-10 rule: 60% white, 30% light gray, 10% blue accent) */
+    --sidebar: #ffffff; /* 60% - main background */
+    --sidebar-foreground: #1f2937;
+    --sidebar-primary: #3b82f6; /* 10% - accent */
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #e8e8ed;
-    --sidebar-accent-foreground: #1d1d1f;
-    --sidebar-border: #e2e2e7; /* Lighter border */
-    --sidebar-ring: #0071e3;
-    /* Apple Fonts */
-    --font-apple-system:
-        -apple-system, BlinkMacSystemFont, "San Francisco", "Helvetica Neue",
-        Helvetica, sans-serif;
-    --font-sf-mono: "SF Mono", Menlo, monospace;
-    --font-sans: var(--font-apple-system);
-    --font-serif: "New York", Georgia, serif;
-    --font-mono: var(--font-sf-mono);
-    /* Apple uses more rounded corners */
-    --radius: 10px;
-    /* Apple-style shadows */
-    --shadow-2xs: 0px 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-xs: 0px 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-sm: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    --sidebar-accent: #f3f4f6; /* 30% - secondary */
+    --sidebar-accent-foreground: #1f2937;
+    --sidebar-border: #e5e7eb;
+    --sidebar-ring: #3b82f6;
+    
+    /* Typography - Lato Font (Educational, Clear, Professional) */
+    --font-sans: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "SF Mono", "Consolas", "Liberation Mono", Menlo, monospace;
+    --font-serif: "Georgia", serif;
+    
+    /* Border Radius (Friendly but Professional) */
+    --radius: 0.5rem; /* 8px */
+    --radius-sm: 0.375rem; /* 6px */
+    --radius-md: 0.5rem; /* 8px */
+    --radius-lg: 0.75rem; /* 12px */
+    --radius-xl: 1rem; /* 16px */
+    
+    /* Shadows (Subtle, Educational Feel) */
+    --shadow-2xs: 0px 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-xs: 0px 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-sm: 0px 2px 4px rgba(0, 0, 0, 0.08);
     --shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0px 8px 16px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0px 12px 24px rgba(0, 0, 0, 0.1);
-    --shadow-2xl: 0px 16px 32px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0px 4px 8px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0px 8px 16px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0px 12px 24px rgba(0, 0, 0, 0.18);
+    --shadow-2xl: 0px 16px 32px rgba(0, 0, 0, 0.2);
+    
+    /* Spacing Scale (Consistent Rhythm) */
+    --space-1: 0.25rem; /* 4px */
+    --space-2: 0.5rem; /* 8px */
+    --space-3: 0.75rem; /* 12px */
+    --space-4: 1rem; /* 16px */
+    --space-6: 1.5rem; /* 24px */
+    --space-8: 2rem; /* 32px */
+    --space-12: 3rem; /* 48px */
+    --space-16: 4rem; /* 64px */
 }
 
 @layer base {
     * {
         @apply border-border outline-ring/50;
     }
+    
+    html {
+        scroll-behavior: smooth;
+    }
+    
     body {
         @apply bg-background text-foreground font-sans;
         -webkit-font-smoothing: antialiased;

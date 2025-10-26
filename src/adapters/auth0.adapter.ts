@@ -1,5 +1,5 @@
-﻿import { PrismaClient } from '@prisma/client'
-import { auth0 } from '@/lib/auth0'
+import { PrismaClient } from '@prisma/client'
+import { Auth0Client } from '@auth0/nextjs-auth0/server'
 
 /**
  * Auth0Adapter - Server-side adapter for Auth0 integration
@@ -8,9 +8,17 @@ import { auth0 } from '@/lib/auth0'
  */
 export class Auth0Adapter {
   private prisma: PrismaClient
+  private auth0: Auth0Client
 
   constructor(prisma?: PrismaClient) {
     this.prisma = prisma || new PrismaClient()
+    this.auth0 = new Auth0Client({
+      domain: process.env.AUTH0_ISSUER_BASE_URL?.replace(/^https?:\/\//, '') || '',
+      clientId: process.env.AUTH0_CLIENT_ID!,
+      clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+      appBaseUrl: process.env.AUTH0_BASE_URL!,
+      secret: process.env.AUTH0_SECRET!,
+    })
   }
 
   /**
@@ -19,7 +27,7 @@ export class Auth0Adapter {
    */
   async getSession() {
     try {
-      const session = await auth0.getSession()
+      const session = await this.auth0.getSession()
       return session
     } catch (error) {
       console.error('Error getting Auth0 session:', error)

@@ -15,14 +15,31 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  auth0Id     String   @unique
+  id          String    @id @default(cuid())
+  email       String    @unique
+  auth0Id     String    @unique
   name        String?
-  canvasToken String?  // Encrypted Canvas API token
+  canvasToken String?   // Encrypted Canvas API token
   courses     Course[]
   files       File[]
+  projects    Project[]
+  createdAt   DateTime  @default(now())
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  archived    Boolean  @default(false)
+  files       File[]
+  outputs     Output[]
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, archived])
 }
 
 model Course {
@@ -42,13 +59,22 @@ model File {
   url         String
   key         String       // UploadThing file key for deletion
   size        Int          // File size in bytes
+  mimeType    String?      // MIME type for proper handling
+  status      String       @default("pending") // pending, processing, ready, error
   userId      String
   user        User         @relation(fields: [userId], references: [id])
+  projectId   String?      // Optional - files can belong to projects
+  project     Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   courseId    String?      // Optional - files can be uploaded without course or from Canvas
   course      Course?      @relation(fields: [courseId], references: [id])
   canvasId    String?      // Canvas file ID
   transcripts Transcript[]
+  outputs     Output[]     // Direct relation to outputs
   createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+
+  @@index([projectId])
+  @@index([userId])
 }
 
 model Transcript {
@@ -61,10 +87,18 @@ model Transcript {
 }
 
 model Output {
-  id           String     @id @default(cuid())
-  type         String     // notes, flashcards, quiz, slides
+  id           String      @id @default(cuid())
+  type         String      // notes, flashcards, quiz, slides
   content      Json
-  transcriptId String
-  transcript   Transcript @relation(fields: [transcriptId], references: [id])
-  createdAt    DateTime   @default(now())
+  projectId    String?
+  project      Project?    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileId       String?
+  file         File?       @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  transcriptId String?
+  transcript   Transcript? @relation(fields: [transcriptId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @default(now()) @updatedAt
+
+  @@index([projectId])
+  @@index([fileId])
 }

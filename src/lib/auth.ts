@@ -1,12 +1,20 @@
-import { auth0 } from './auth0';
+import { cookies } from 'next/headers';
 
 /**
- * Get the current user session
+ * Get the current user session from cookies
  * @returns User session or null if not authenticated
  */
 export async function getSession() {
   try {
-    return await auth0.getSession();
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('appSession');
+    
+    if (!sessionCookie) {
+      return null;
+    }
+    
+    const session = JSON.parse(sessionCookie.value);
+    return session;
   } catch (error) {
     console.error('Error getting session:', error);
     return null;
@@ -19,8 +27,9 @@ export async function getSession() {
  */
 export async function getAccessToken() {
   try {
-    const tokenResponse = await auth0.getAccessToken();
-    return tokenResponse?.token || null;
+    const session = await getSession();
+    // In Auth0 v4, the access token is in the session
+    return session?.accessToken || null;
   } catch (error) {
     console.error('Error getting access token:', error);
     return null;
