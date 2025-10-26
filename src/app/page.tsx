@@ -1,21 +1,72 @@
+'use client';
+
 import Link from 'next/link';
 import { ArrowRight, BookOpen, Brain, Sparkles, Zap, FileText, GraduationCap } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
 
 export default function Home() {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // GSAP: Fade in hero elements with stagger
+    if (heroRef.current) {
+      const elements = heroRef.current.querySelectorAll('.animate-fade-in');
+      gsap.fromTo(
+        elements,
+        { opacity: 0, y: 30 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          duration: 0.8, 
+          stagger: 0.15,
+          ease: 'power3.out'
+        }
+      );
+    }
+
+    // GSAP: Count up animation for stats
+    if (statsRef.current) {
+      const statNumbers = statsRef.current.querySelectorAll('.stat-number');
+      statNumbers.forEach((stat) => {
+        const target = parseInt(stat.getAttribute('data-target') || '0');
+        const isPercentage = stat.textContent?.includes('%');
+        
+        gsap.to(stat, {
+          innerHTML: isPercentage ? target : target,
+          duration: 2,
+          snap: { innerHTML: 1 },
+          ease: 'power2.out',
+          onUpdate: function() {
+            const value = Math.ceil(gsap.getProperty(stat, 'innerHTML') as number);
+            if (isPercentage) {
+              stat.textContent = `${value}%`;
+            } else {
+              stat.textContent = `${value.toLocaleString()}+`;
+            }
+          }
+        });
+      });
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navbar */}
-      <nav className="fixed top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
+      <nav className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <Link href="/" className="flex items-center space-x-2">
-              <GraduationCap className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold text-foreground">EduFlow</span>
+            <Link href="/" className="flex items-center space-x-2.5 group">
+              <div className="rounded-lg bg-linear-to-br from-secondary/20 to-secondary/10 p-1.5 transition-all group-hover:scale-110">
+                <GraduationCap className="h-6 w-6 text-secondary" />
+              </div>
+              <span className="text-xl font-semibold text-foreground">EduFlow</span>
             </Link>
             <div className="flex items-center gap-4">
               <Link
                 href="/api/auth/login"
-                className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary-hover hover:shadow-md"
+                className="inline-flex items-center justify-center rounded-lg bg-secondary px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-secondary-hover hover:shadow-md hover:scale-105"
               >
                 Get Started
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -26,163 +77,136 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
-        {/* Background gradient orbs */}
-        <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/10 blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-secondary/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <section ref={heroRef} className="relative pt-32 pb-24 px-6 overflow-hidden">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0 bg-linear-to-b from-secondary/5 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute top-1/3 left-1/4 h-[600px] w-[600px] rounded-full bg-secondary/5 blur-3xl" />
         
-        <div className="relative mx-auto max-w-6xl text-center">
+        <div className="relative mx-auto max-w-5xl text-center">
           {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary-light px-4 py-1.5 text-sm font-medium text-primary ring-1 ring-inset ring-primary/20">
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-secondary/20 bg-secondary/5 px-4 py-2 text-sm font-medium text-secondary animate-fade-in">
             <Sparkles className="h-4 w-4" />
             <span>AI-Powered Learning Platform</span>
           </div>
           
           {/* Main heading */}
-          <h1 className="mb-6 text-5xl md:text-7xl font-bold tracking-tight">
+          <h1 className="mb-6 text-5xl md:text-7xl font-bold tracking-tight text-foreground animate-fade-in">
             Transform Learning with{' '}
-            <span className="bg-gradient-to-r from-primary via-blue-500 to-secondary bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-secondary via-secondary/80 to-secondary/60 bg-clip-text text-transparent">
               AI Intelligence
             </span>
           </h1>
           
-          <p className="mx-auto mb-10 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed">
-            Upload your educational content and watch as our advanced AI generates comprehensive notes, 
-            interactive flashcards, quizzes, and presentation slides—all tailored to accelerate your learning journey.
+          <p className="mx-auto mb-12 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed animate-fade-in">
+            Upload your educational content and let AI generate comprehensive notes, 
+            interactive flashcards, quizzes, and presentation slides.
           </p>
           
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          {/* CTA Button */}
+          <div className="animate-fade-in">
             <Link
               href="/api/auth/login"
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary-hover hover:shadow-xl hover:scale-105"
+              className="inline-flex items-center justify-center rounded-lg bg-secondary px-8 py-4 text-base font-medium text-white shadow-lg transition-all hover:bg-secondary-hover hover:shadow-xl hover:scale-105"
             >
               Get Started Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
-            <a
-              href="#features"
-              className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-8 py-4 text-base font-semibold text-foreground transition-all hover:bg-accent"
-            >
-              Learn More
-            </a>
           </div>
           
           {/* Stats */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div ref={statsRef} className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-12 animate-fade-in">
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary">2,500+</div>
-              <div className="text-sm text-muted-foreground">Files Processed</div>
+              <div className="stat-number text-4xl font-bold text-secondary mb-2" data-target="2500">0+</div>
+              <div className="text-sm text-muted-foreground font-medium">Files Processed</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary">8,400+</div>
-              <div className="text-sm text-muted-foreground">AI Outputs</div>
+              <div className="stat-number text-4xl font-bold text-secondary mb-2" data-target="8400">0+</div>
+              <div className="text-sm text-muted-foreground font-medium">AI Outputs</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary">620+</div>
-              <div className="text-sm text-muted-foreground">Active Projects</div>
+              <div className="stat-number text-4xl font-bold text-secondary mb-2" data-target="620">0+</div>
+              <div className="text-sm text-muted-foreground font-medium">Active Projects</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary">95%</div>
-              <div className="text-sm text-muted-foreground">Success Rate</div>
+              <div className="stat-number text-4xl font-bold text-secondary mb-2" data-target="95">0%</div>
+              <div className="text-sm text-muted-foreground font-medium">Success Rate</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-6 bg-muted/30">
-        <div className="mx-auto max-w-7xl">
+      <section id="features" className="py-24 px-6">
+        <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-secondary-light px-4 py-1.5 text-sm font-medium text-secondary ring-1 ring-inset ring-secondary/20">
-              <Zap className="h-4 w-4" />
-              <span>Powerful Features</span>
-            </div>
-            <h2 className="text-4xl font-bold tracking-tight mb-4">
-              Everything You Need to Excel
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">
+              Four Powerful Tools
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our AI-powered platform transforms your study materials into comprehensive learning tools
+              AI-generated study materials from your content
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Feature 1 */}
-            <div className="group relative rounded-2xl border border-border bg-card p-8 transition-all hover:shadow-lg hover:border-primary/50">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <FileText className="h-6 w-6" />
+            <div className="group relative rounded-xl border border-border bg-card p-8 transition-all hover:shadow-lg hover:border-secondary/50 hover:-translate-y-1">
+              <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-secondary/10 text-secondary transition-all group-hover:scale-110">
+                <FileText className="h-7 w-7" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold">Smart Notes</h3>
-              <p className="text-muted-foreground">
-                AI-generated comprehensive notes from your lectures, videos, and documents
+              <h3 className="mb-2 text-xl font-semibold text-foreground">Notes</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Comprehensive study notes extracted from lectures and documents
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="group relative rounded-2xl border border-border bg-card p-8 transition-all hover:shadow-lg hover:border-primary/50">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
-                <Brain className="h-6 w-6" />
+            <div className="group relative rounded-xl border border-border bg-card p-8 transition-all hover:shadow-lg hover:border-secondary/50 hover:-translate-y-1">
+              <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-secondary/10 text-secondary transition-all group-hover:scale-110">
+                <Brain className="h-7 w-7" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold">Flashcards</h3>
-              <p className="text-muted-foreground">
-                Interactive flashcards with spaced repetition to maximize retention
+              <h3 className="mb-2 text-xl font-semibold text-foreground">Flashcards</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Interactive cards with spaced repetition for better retention
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="group relative rounded-2xl border border-border bg-card p-8 transition-all hover:shadow-lg hover:border-primary/50">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <BookOpen className="h-6 w-6" />
+            <div className="group relative rounded-xl border border-border bg-card p-8 transition-all hover:shadow-lg hover:border-secondary/50 hover:-translate-y-1">
+              <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-secondary/10 text-secondary transition-all group-hover:scale-110">
+                <BookOpen className="h-7 w-7" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold">Quizzes</h3>
-              <p className="text-muted-foreground">
-                Practice quizzes generated from your content to test understanding
+              <h3 className="mb-2 text-xl font-semibold text-foreground">Quizzes</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Practice questions generated to test your understanding
               </p>
             </div>
 
             {/* Feature 4 */}
-            <div className="group relative rounded-2xl border border-border bg-card p-8 transition-all hover:shadow-lg hover:border-primary/50">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
-                <Sparkles className="h-6 w-6" />
+            <div className="group relative rounded-xl border border-border bg-card p-8 transition-all hover:shadow-lg hover:border-secondary/50 hover:-translate-y-1">
+              <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-secondary/10 text-secondary transition-all group-hover:scale-110">
+                <Sparkles className="h-7 w-7" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold">Slides</h3>
-              <p className="text-muted-foreground">
-                Beautiful presentation decks created automatically from your materials
+              <h3 className="mb-2 text-xl font-semibold text-foreground">Slides</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Beautiful presentation decks created from your materials
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-6">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2 className="mb-6 text-4xl md:text-5xl font-bold tracking-tight">
-            Ready to Transform Your Learning?
-          </h2>
-          <p className="mb-8 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Join thousands of students and educators who are already using EduFlow to accelerate their learning.
-          </p>
-          <Link
-            href="/api/auth/login"
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary-hover hover:shadow-xl hover:scale-105"
-          >
-            Start Free Today
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
-        </div>
-      </section>
-
       {/* Footer */}
-      <footer className="border-t py-12 px-6 bg-muted/30">
+      <footer className="border-t py-12 px-6">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center space-x-2">
-              <GraduationCap className="h-6 w-6 text-primary" />
-              <span className="text-lg font-semibold">EduFlow</span>
+            <div className="flex items-center space-x-2.5">
+              <div className="rounded-lg bg-secondary/10 p-1.5">
+                <GraduationCap className="h-5 w-5 text-secondary" />
+              </div>
+              <span className="text-lg font-semibold text-foreground">EduFlow</span>
             </div>
             <div className="text-sm text-muted-foreground">
-              © 2024 EduFlow. All rights reserved.
+              © 2024 EduFlow. Transform learning with AI.
             </div>
           </div>
         </div>

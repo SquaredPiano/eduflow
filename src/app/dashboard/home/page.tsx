@@ -2,14 +2,15 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
 import { 
   ArrowRight, 
-  CheckCircle2, 
-  Circle, 
   Loader2,
   Sparkles,
   FolderKanban,
-  Network
+  FileText,
+  Brain
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -31,6 +32,9 @@ interface Project {
 }
 
 export default function DashboardHome() {
+  const statsRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
+
   const { data: userData } = useQuery<UserData>({
     queryKey: ['user'],
     queryFn: async () => {
@@ -40,7 +44,7 @@ export default function DashboardHome() {
     },
   });
 
-  const { data: projects = [] } = useQuery<Project[]>({
+  const { data: projects = [], isLoading } = useQuery<Project[]>({
     queryKey: ['projects'],
     queryFn: async () => {
       const response = await fetch('/api/projects');
@@ -49,169 +53,149 @@ export default function DashboardHome() {
     },
   });
 
-  const hasProjects = projects.length > 0;
-  const hasFiles = projects.some(p => (p._count?.files || 0) > 0);
-  const hasOutputs = projects.some(p => (p._count?.outputs || 0) > 0);
+  const totalFiles = projects.reduce((acc, p) => acc + (p._count?.files || 0), 0);
+  const totalOutputs = projects.reduce((acc, p) => acc + (p._count?.outputs || 0), 0);
 
-  const steps = [
-    {
-      id: 1,
-      title: 'Create a Project',
-      description: 'Start by creating your first project to organize your learning materials',
-      completed: hasProjects,
-      link: '/dashboard/projects',
-      icon: FolderKanban,
-    },
-    {
-      id: 2,
-      title: 'Upload Materials',
-      description: 'Add PDFs, videos, documents, or import from Canvas',
-      completed: hasFiles,
-      link: hasProjects ? `/dashboard/project/${projects[0]?.id}` : '/dashboard/projects',
-      icon: Sparkles,
-    },
-    {
-      id: 3,
-      title: 'Generate AI Content',
-      description: 'Create notes, flashcards, quizzes, and slides with AI',
-      completed: hasOutputs,
-      link: hasProjects ? `/dashboard/project/${projects[0]?.id}` : '/dashboard/projects',
-      icon: Network,
-    },
-  ];
+  useEffect(() => {
+    // GSAP: Animate stats on load
+    if (statsRef.current && !isLoading) {
+      const cards = statsRef.current.querySelectorAll('.stat-card');
+      gsap.fromTo(
+        cards,
+        { opacity: 0, y: 20, scale: 0.95 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.6,
+          stagger: 0.1,
+          ease: 'power3.out',
+        }
+      );
+
+      // Animate numbers
+      const numbers = statsRef.current.querySelectorAll('.stat-value');
+      numbers.forEach((num) => {
+        const target = parseInt(num.getAttribute('data-value') || '0');
+        gsap.to(num, {
+          innerHTML: target,
+          duration: 1.5,
+          snap: { innerHTML: 1 },
+          ease: 'power2.out',
+        });
+      });
+    }
+
+    // GSAP: Animate project cards
+    if (cardsRef.current && projects.length > 0) {
+      const cards = cardsRef.current.querySelectorAll('.project-card');
+      gsap.fromTo(
+        cards,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.7,
+          stagger: 0.15,
+          ease: 'power3.out',
+          delay: 0.3,
+        }
+      );
+    }
+  }, [projects, isLoading]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-secondary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
-      <div className="mx-auto max-w-5xl px-6 py-12">
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-6xl px-6 py-12">
         {/* Welcome Header */}
-        <div className="mb-12">
-          <div className="flex items-center gap-4 mb-4">
-            {userData?.user.picture && (
-              <img 
-                src={userData.user.picture} 
-                alt={userData.user.name}
-                className="h-16 w-16 rounded-full border-2 border-gray-200"
-              />
-            )}
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900">
-                Welcome back{userData?.user.name ? `, ${userData.user.name.split(' ')[0]}` : ''}!
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Let's continue your learning journey
-              </p>
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3">
+            Welcome back{userData?.user.name ? `, ${userData.user.name.split(' ')[0]}` : ''}
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Your learning dashboard
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div ref={statsRef} className="grid gap-6 sm:grid-cols-3 mb-16">
+          <div className="stat-card rounded-xl border border-border bg-card p-8 text-center shadow-sm hover:shadow-md transition-all">
+            <FolderKanban className="h-8 w-8 text-secondary mx-auto mb-3" />
+            <div className="stat-value text-4xl font-bold text-foreground mb-1" data-value={projects.length}>
+              0
             </div>
+            <div className="text-sm font-medium text-muted-foreground">Projects</div>
+          </div>
+          <div className="stat-card rounded-xl border border-border bg-card p-8 text-center shadow-sm hover:shadow-md transition-all">
+            <FileText className="h-8 w-8 text-secondary mx-auto mb-3" />
+            <div className="stat-value text-4xl font-bold text-foreground mb-1" data-value={totalFiles}>
+              0
+            </div>
+            <div className="text-sm font-medium text-muted-foreground">Files</div>
+          </div>
+          <div className="stat-card rounded-xl border border-border bg-card p-8 text-center shadow-sm hover:shadow-md transition-all">
+            <Brain className="h-8 w-8 text-secondary mx-auto mb-3" />
+            <div className="stat-value text-4xl font-bold text-foreground mb-1" data-value={totalOutputs}>
+              0
+            </div>
+            <div className="text-sm font-medium text-muted-foreground">AI Outputs</div>
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid gap-6 sm:grid-cols-3 mb-12">
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="text-sm font-medium text-gray-500 mb-1">Projects</div>
-            <div className="text-3xl font-semibold text-gray-900">{projects.length}</div>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="text-sm font-medium text-gray-500 mb-1">Files</div>
-            <div className="text-3xl font-semibold text-gray-900">
-              {projects.reduce((acc, p) => acc + (p._count?.files || 0), 0)}
-            </div>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="text-sm font-medium text-gray-500 mb-1">AI Outputs</div>
-            <div className="text-3xl font-semibold text-gray-900">
-              {projects.reduce((acc, p) => acc + (p._count?.outputs || 0), 0)}
-            </div>
-          </div>
+        {/* Quick Actions */}
+        <div className="text-center">
+          <Link href="/dashboard/projects">
+            <Button 
+              size="lg" 
+              className="bg-secondary hover:bg-secondary-hover text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+            >
+              <Sparkles className="mr-2 h-5 w-5" />
+              {projects.length === 0 ? 'Create Your First Project' : 'View All Projects'}
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
         </div>
 
-        {/* Getting Started Flow */}
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Getting Started</h2>
-          <p className="text-gray-600 mb-8">Follow these steps to get the most out of EduFlow</p>
-
-          <div className="space-y-6">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              const isLast = index === steps.length - 1;
-              
-              return (
-                <div key={step.id} className="relative">
-                  <div className="flex items-start gap-4">
-                    {/* Icon and connector */}
-                    <div className="relative flex flex-col items-center">
-                      <div className={`
-                        flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all
-                        ${step.completed 
-                          ? 'bg-green-50 border-green-500' 
-                          : 'bg-gray-50 border-gray-300'
-                        }
-                      `}>
-                        {step.completed ? (
-                          <CheckCircle2 className="h-6 w-6 text-green-600" />
-                        ) : (
-                          <Icon className="h-6 w-6 text-gray-400" />
-                        )}
+        {/* Recent Projects */}
+        {projects.length > 0 && (
+          <div ref={cardsRef} className="mt-16">
+            <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Recent Projects</h2>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {projects.slice(0, 6).map((project) => (
+                <Link 
+                  key={project.id} 
+                  href={`/dashboard/project/${project.id}`}
+                  className="project-card"
+                >
+                  <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-lg hover:border-secondary/50 transition-all hover:-translate-y-1 group">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="rounded-lg bg-secondary/10 p-2.5 group-hover:scale-110 transition-all">
+                        <FolderKanban className="h-5 w-5 text-secondary" />
                       </div>
-                      {!isLast && (
-                        <div className={`
-                          w-0.5 h-16 mt-2
-                          ${step.completed ? 'bg-green-500' : 'bg-gray-300'}
-                        `} />
-                      )}
+                      <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-1 transition-all" />
                     </div>
-
-                    {/* Content */}
-                    <div className="flex-1 pb-8">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                            {step.title}
-                          </h3>
-                          <p className="text-sm text-gray-600 mb-3">
-                            {step.description}
-                          </p>
-                          {step.completed && (
-                            <div className="inline-flex items-center gap-1 text-sm text-green-600 font-medium">
-                              <CheckCircle2 className="h-4 w-4" />
-                              Completed
-                            </div>
-                          )}
-                        </div>
-                        {!step.completed && (
-                          <Link href={step.link}>
-                            <Button className="bg-blue-600 hover:bg-blue-700">
-                              {step.id === 1 ? 'Get Started' : 'Continue'}
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                          </Link>
-                        )}
-                      </div>
+                    <h3 className="font-semibold text-foreground mb-2 text-lg line-clamp-1">
+                      {project.name}
+                    </h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>{project._count?.files || 0} files</span>
+                      <span>•</span>
+                      <span>{project._count?.outputs || 0} outputs</span>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* All Complete State */}
-          {hasProjects && hasFiles && hasOutputs && (
-            <div className="mt-8 rounded-lg bg-gradient-to-r from-blue-50 to-green-50 p-6 border border-blue-200">
-              <div className="flex items-center gap-3 mb-2">
-                <Sparkles className="h-6 w-6 text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">You're all set!</h3>
-              </div>
-              <p className="text-gray-600 mb-4">
-                You've completed the onboarding. Continue exploring your projects and generating AI content.
-              </p>
-              <Link href="/dashboard/projects">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  View All Projects
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+                </Link>
+              ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
