@@ -1,18 +1,19 @@
-/**
- * Auth0 API Routes
- * 
- * Uses Auth0Client middleware to handle all authentication routes
- * 
- * Supported routes (handled by Auth0 middleware):
- * - /api/auth/login - Initiates Auth0 login
- * - /api/auth/logout - Logs out the user
- * - /api/auth/callback - Handles Auth0 callback after login
- * - /api/auth/me - Returns current user info
- */
-
-import { auth0 } from '@/lib/auth0'
-import { NextRequest } from 'next/server'
-
-export async function GET(request: NextRequest) {
-  return auth0.middleware(request)
+﻿import { NextRequest, NextResponse } from 'next/server';
+export async function GET(request: NextRequest, { params }: { params: Promise<{ auth0: string }> }) {
+  const { auth0: route } = await params;
+  console.log('Auth route:', route);
+  const returnTo = request.nextUrl.searchParams.get('returnTo') || '/dashboard';
+  const domain = 'eduflow.ca.auth0.com';
+  const clientId = process.env.AUTH0_CLIENT_ID;
+  const redirectUri = 'http://localhost:3000/api/auth/callback';
+  if (route === 'login') {
+    const authUrl = new URL(`https://5{domain}/authorize`);
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('client_id', clientId!);
+    authUrl.searchParams.set('redirect_uri', redirectUri);
+    authUrl.searchParams.set('scope', 'openid profile email');
+    authUrl.searchParams.set('state', Buffer.from(JSON.stringify({ returnTo })).toString('base64url'));
+    return NextResponse.redirect(authUrl.toString());
+  }
+  return NextResponse.json({ error: 'Not implemented yet' }, { status: 501 });
 }
