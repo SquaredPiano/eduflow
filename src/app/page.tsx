@@ -1,6 +1,6 @@
-import EnhancedLandingPage from '@/components/pages/EnhancedLandingPage';
+import KhanInspiredLandingPage from '@/components/pages/KhanInspiredLandingPage';
 
 export default function Home() {
-  return <EnhancedLandingPage />;
+  return <KhanInspiredLandingPage />;
 }
 
