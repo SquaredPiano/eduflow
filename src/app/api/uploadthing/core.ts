@@ -1,8 +1,10 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/lib/auth";
+import { PrismaClient } from "@prisma/client";
 
 const f = createUploadthing();
+const prisma = new PrismaClient();
 
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
@@ -18,17 +20,32 @@ export const ourFileRouter = {
     // Set permissions and file types for this FileRoute
     .middleware(async ({ req }) => {
       // This code runs on your server before upload
-      // TODO: Uncomment this once Auth0 integration is complete (Phase 1)
-      // const session = await getSession();
-      // if (!session?.user) throw new UploadThingError("Unauthorized");
-      // return { userId: session.user.sub };
-
-      // TEMPORARY: Allow uploads without authentication for testing
-      // This should be removed once Auth0 is integrated
-      console.log("⚠️  TEMP: Allowing unauthenticated upload for testing");
+      const session = await getSession();
       
-      // Whatever is returned here is accessible in onUploadComplete as `metadata`
-      return { userId: "temp-user-id" };
+      // TODO: Once Auth0 is properly implemented in src/lib/auth.ts,
+      // this will work correctly. For now, uncomment the lines below:
+      
+      // Check if user is authenticated
+      // if (!session?.user) {
+      //   throw new UploadThingError("Unauthorized - Please log in to upload files");
+      // }
+      
+      // TEMPORARY: Allow uploads without authentication for testing
+      // Remove this once Auth0 integration is complete
+      console.log("⚠️  TEMP: Allowing unauthenticated upload (Auth0 stub)");
+      
+      // Return user metadata for use in onUploadComplete
+      // When Auth0 is implemented, uncomment:
+      // return { 
+      //   userId: session.user.sub,
+      //   userEmail: session.user.email,
+      // };
+      
+      // Temporary fallback:
+      return { 
+        userId: "temp-user-id",
+        userEmail: "temp@example.com",
+      };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload
@@ -36,12 +53,40 @@ export const ourFileRouter = {
       console.log("file url", file.url);
       console.log("file key", file.key);
 
-      // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
-      return { 
-        uploadedBy: metadata.userId, 
-        fileUrl: file.url,
-        fileKey: file.key 
-      };
+      try {
+        // Save file metadata to database
+        const savedFile = await prisma.file.create({
+          data: {
+            name: file.name,
+            type: file.type || "unknown",
+            url: file.url,
+            key: file.key,
+            size: file.size,
+            userId: metadata.userId,
+            // courseId is optional - can be associated later
+          },
+        });
+
+        console.log("File saved to database with ID:", savedFile.id);
+
+        // Return data to client
+        return { 
+          uploadedBy: metadata.userId,
+          fileId: savedFile.id,
+          fileUrl: file.url,
+          fileKey: file.key,
+        };
+      } catch (error) {
+        console.error("Failed to save file to database:", error);
+        // Don't throw here - file is already uploaded
+        // Return what we can
+        return {
+          uploadedBy: metadata.userId,
+          fileUrl: file.url,
+          fileKey: file.key,
+          error: "Failed to save file metadata to database",
+        };
+      }
     }),
 } satisfies FileRouter;
 
