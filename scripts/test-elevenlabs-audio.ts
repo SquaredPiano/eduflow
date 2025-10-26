@@ -79,6 +79,9 @@ async function testElevenLabsWithRealAudio() {
         name: "harvard-list-01.wav",
         url: "file://" + audioPath,
         type: "audio/wav",
+        key: "test-key-elevenlabs",
+        size: 1024,
+        userId: testUser.id,
         courseId: testCourse.id,
       },
     });

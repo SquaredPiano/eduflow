@@ -100,6 +100,9 @@ async function testElevenLabsWithMP4() {
         name: mp4File,
         url: "file://" + mp4Path,
         type: "video/mp4",
+        key: "test-key-mp4",
+        size: 1024,
+        userId: testUser.id,
         courseId: testCourse.id,
       },
     });

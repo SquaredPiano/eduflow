@@ -79,6 +79,9 @@ export class CanvasService {
           name: canvasFile.display_name,
           type: this.mapContentTypeToFileType(canvasFile['content-type']),
           url: canvasFile.url,
+          key: `canvas-${canvasFile.id}`, // Canvas files use Canvas ID as key
+          size: canvasFile.size,
+          userId,
           courseId,
           canvasId: canvasFile.id
         })

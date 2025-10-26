@@ -386,6 +386,9 @@ async function auditPhase5() {
         name: 'Test File',
         type: 'pdf',
         url: 'https://example.com/file.pdf',
+        key: 'test-key-123',
+        size: 1024,
+        userId: user.id,
         courseId: course.id,
         canvasId: 'canvas-file-456'
       }

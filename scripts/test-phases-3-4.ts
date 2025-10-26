@@ -75,6 +75,9 @@ async function testPhase3() {
         name: "TEST_sample_audio.mp3",
         type: "audio/mpeg",
         url: "https://example.com/test-audio.mp3", // Note: Using placeholder URL
+        key: "test-key-phases-3-4",
+        size: 1024,
+        userId: user.id,
         courseId: course.id,
       },
     });
