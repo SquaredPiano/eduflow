@@ -337,95 +337,310 @@ const service = new GenerateService(geminiClient);
 
 ---
 
-### Phase 3: Whisper Transcription (Days 5-6)
+### Phase 3: ElevenLabs Transcription (Days 5-6)
 
-**Goal**: Self-host Whisper on Digital Ocean for video transcription
+**Goal**: Use ElevenLabs Speech-to-Text API for video/audio transcription
 
 #### Tasks:
 
-1. **Digital Ocean Setup**
-   
-   ```bash
-   # SSH into droplet
-   ssh root@your-droplet-ip
-   
-   # Install Python and dependencies
-   apt update && apt install -y python3-pip ffmpeg
-   pip3 install openai-whisper fastapi uvicorn python-multipart
-   
-   # Create FastAPI server
-   # /root/whisper_server.py
-   ```
-
-2. **Whisper FastAPI Server**
-   
-   ```python
-   from fastapi import FastAPI, File, UploadFile
-   import whisper
-   import tempfile
-   
-   app = FastAPI()
-   model = whisper.load_model("small")
-   
-   @app.post("/transcribe")
-   async def transcribe(file: UploadFile = File(...)):
-       with tempfile.NamedTemporaryFile(delete=False) as tmp:
-           tmp.write(await file.read())
-           result = model.transcribe(tmp.name)
-           return {"text": result["text"]}
-   
-   # Run with: uvicorn whisper_server:app --host 0.0.0.0 --port 8000
-   ```
-
-3. **Whisper Adapter**
+1. **ElevenLabs Adapter Implementation**
    
    ```typescript
-   // src/adapters/whisper.adapter.ts
-   export class WhisperAdapter implements ITranscriber {
-     constructor(private apiUrl: string) {}
+   // src/adapters/elevenlabs.adapter.ts
+   import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+   
+   export class ElevenLabsAdapter implements ITranscriber {
+     private client: ElevenLabsClient;
+   
+     constructor(apiKey: string) {
+       this.client = new ElevenLabsClient({ apiKey });
+     }
    
      async transcribe(audioUrl: string): Promise<string> {
+       // Download audio file
        const response = await fetch(audioUrl);
-       const blob = await response.blob();
-   
-       const formData = new FormData();
-       formData.append('file', blob);
-   
-       const result = await fetch(`${this.apiUrl}/transcribe`, {
-         method: 'POST',
-         body: formData,
+       const arrayBuffer = await response.arrayBuffer();
+       const audioFile = new File([arrayBuffer], 'audio.mp3', { 
+         type: response.headers.get('content-type') || 'audio/mpeg' 
        });
    
-       const { text } = await result.json();
-       return text;
+       // Transcribe using ElevenLabs
+       const result = await this.client.speechToText.convert({
+         audio: audioFile,
+         model_id: "scribe-v1", // ElevenLabs transcription model
+       });
+   
+       return result.text;
+     }
+   
+     async transcribeWithTimestamps(audioUrl: string): Promise<{
+       text: string;
+       segments?: Array<{ start: number; end: number; text: string }>;
+     }> {
+       const response = await fetch(audioUrl);
+       const arrayBuffer = await response.arrayBuffer();
+       const audioFile = new File([arrayBuffer], 'audio.mp3', {
+         type: response.headers.get('content-type') || 'audio/mpeg'
+       });
+   
+       const result = await this.client.speechToText.convertWithTimestamps({
+         audio: audioFile,
+         model_id: "scribe-v1",
+       });
+   
+       return {
+         text: result.text,
+         segments: result.segments?.map(s => ({
+           start: s.start_time,
+           end: s.end_time,
+           text: s.text
+         }))
+       };
      }
    }
    ```
 
-4. **Transcribe Service**
+2. **Transcribe Service**
    
    ```typescript
    // src/services/transcribe.service.ts
+   import { PrismaClient } from '@prisma/client';
+   import { ITranscriber } from '@/domain/interfaces/ITranscriber';
+   import { TranscriptEntity } from '@/domain/entities/TranscriptEntity';
+   
    export class TranscribeService {
      constructor(
        private transcriber: ITranscriber,
-       private repository: IRepository
+       private prisma: PrismaClient
      ) {}
    
-     async transcribeVideo(fileId: string): Promise<TranscriptEntity> {
-       const file = await this.repository.getFile(fileId);
+     async transcribeFile(fileId: string): Promise<TranscriptEntity> {
+       // Get file from database
+       const file = await this.prisma.file.findUnique({
+         where: { id: fileId }
+       });
+   
+       if (!file) {
+         throw new Error(`File not found: ${fileId}`);
+       }
+   
+       // Check if file is audio/video
+       const audioVideoTypes = [
+         'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a',
+         'video/mp4', 'video/webm', 'video/quicktime'
+       ];
+   
+       if (!audioVideoTypes.includes(file.type)) {
+         throw new Error(`File type ${file.type} is not audio/video`);
+       }
+   
+       // Transcribe using ElevenLabs
        const text = await this.transcriber.transcribe(file.url);
-       return this.repository.saveTranscript(fileId, text);
+   
+       // Save transcript to database
+       const transcript = await this.prisma.transcript.create({
+         data: {
+           content: text,
+           fileId: file.id,
+         }
+       });
+   
+       return new TranscriptEntity(
+         transcript.id,
+         transcript.fileId,
+         transcript.content
+       );
      }
+   
+     async getTranscript(transcriptId: string): Promise<TranscriptEntity | null> {
+       const transcript = await this.prisma.transcript.findUnique({
+         where: { id: transcriptId }
+       });
+   
+       if (!transcript) return null;
+   
+       return new TranscriptEntity(
+         transcript.id,
+         transcript.fileId,
+         transcript.content
+       );
+     }
+   }
+   ```
+
+3. **API Route Handler**
+   
+   ```typescript
+   // src/app/api/transcribe/route.ts
+   import { NextResponse } from 'next/server';
+   import { getSession } from '@/lib/auth';
+   import { TranscribeService } from '@/services/transcribe.service';
+   import { ElevenLabsAdapter } from '@/adapters/elevenlabs.adapter';
+   import { PrismaClient } from '@prisma/client';
+   
+   export async function POST(req: Request) {
+     try {
+       // Verify authentication
+       const session = await getSession();
+       if (!session?.user) {
+         return NextResponse.json(
+           { error: 'Unauthorized' },
+           { status: 401 }
+         );
+       }
+   
+       // Parse request
+       const { fileId } = await req.json();
+   
+       if (!fileId) {
+         return NextResponse.json(
+           { error: 'Missing fileId' },
+           { status: 400 }
+         );
+       }
+   
+       // Initialize services
+       const prisma = new PrismaClient();
+       const elevenlabs = new ElevenLabsAdapter(
+         process.env.ELEVENLABS_API_KEY!
+       );
+       const transcribeService = new TranscribeService(elevenlabs, prisma);
+   
+       // Transcribe file
+       const transcript = await transcribeService.transcribeFile(fileId);
+   
+       return NextResponse.json({
+         success: true,
+         transcript: {
+           id: transcript.id,
+           fileId: transcript.fileId,
+           text: transcript.text,
+         }
+       });
+   
+     } catch (error: any) {
+       console.error('Transcription error:', error);
+       return NextResponse.json(
+         { error: error.message || 'Transcription failed' },
+         { status: 500 }
+       );
+     }
+   }
+   
+   export async function GET(req: Request) {
+     try {
+       const session = await getSession();
+       if (!session?.user) {
+         return NextResponse.json(
+           { error: 'Unauthorized' },
+           { status: 401 }
+         );
+       }
+   
+       const { searchParams } = new URL(req.url);
+       const transcriptId = searchParams.get('id');
+   
+       if (!transcriptId) {
+         return NextResponse.json(
+           { error: 'Missing transcript id' },
+           { status: 400 }
+         );
+       }
+   
+       const prisma = new PrismaClient();
+       const elevenlabs = new ElevenLabsAdapter(
+         process.env.ELEVENLABS_API_KEY!
+       );
+       const transcribeService = new TranscribeService(elevenlabs, prisma);
+   
+       const transcript = await transcribeService.getTranscript(transcriptId);
+   
+       if (!transcript) {
+         return NextResponse.json(
+           { error: 'Transcript not found' },
+           { status: 404 }
+         );
+       }
+   
+       return NextResponse.json({
+         success: true,
+         transcript: {
+           id: transcript.id,
+           fileId: transcript.fileId,
+           text: transcript.text,
+         }
+       });
+   
+     } catch (error: any) {
+       console.error('Get transcript error:', error);
+       return NextResponse.json(
+         { error: error.message || 'Failed to get transcript' },
+         { status: 500 }
+       );
+     }
+   }
+   ```
+
+4. **Custom Hook**
+   
+   ```typescript
+   // src/hooks/useTranscribe.ts
+   'use client';
+   
+   import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+   
+   export function useTranscribe() {
+     const queryClient = useQueryClient();
+   
+     const transcribeMutation = useMutation({
+       mutationFn: async (fileId: string) => {
+         const res = await fetch('/api/transcribe', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ fileId }),
+         });
+   
+         if (!res.ok) {
+           const error = await res.json();
+           throw new Error(error.error || 'Transcription failed');
+         }
+   
+         return res.json();
+       },
+       onSuccess: () => {
+         queryClient.invalidateQueries({ queryKey: ['transcripts'] });
+       },
+     });
+   
+     return {
+       transcribe: transcribeMutation.mutateAsync,
+       isTranscribing: transcribeMutation.isPending,
+       error: transcribeMutation.error,
+     };
+   }
+   
+   export function useTranscript(transcriptId: string | null) {
+     return useQuery({
+       queryKey: ['transcript', transcriptId],
+       queryFn: async () => {
+         if (!transcriptId) return null;
+   
+         const res = await fetch(`/api/transcribe?id=${transcriptId}`);
+         if (!res.ok) throw new Error('Failed to fetch transcript');
+         return res.json();
+       },
+       enabled: !!transcriptId,
+     });
    }
    ```
 
 #### Deliverables:
 
-- Whisper FastAPI server running on Digital Ocean
-- `/api/transcribe` route handler
-- Video transcription working end-to-end
-- Progress indicators in UI
+- ElevenLabs adapter with Speech-to-Text integration
+- `/api/transcribe` route handler (POST for transcription, GET for retrieval)
+- TranscribeService with Prisma integration
+- Custom React hooks for transcription
+- Video/audio transcription working end-to-end
 
 ---
 
