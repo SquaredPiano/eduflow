@@ -141,7 +141,7 @@ audit('File Upload UI', 15, () => {
     score += 3;
     details.push('✓ FileUploadButton component exists');
     
-    if (fileContains('src/components/upload/FileUploadButton.tsx', "'use client'")) {
+    if (fileContains('src/components/upload/FileUploadButton.tsx', /['"]use client['"]/)) {
       score += 1;
       details.push('✓ Client directive present');
     }
@@ -474,7 +474,7 @@ audit('Build System', 10, () => {
       details.push('✓ DOCX parsing library installed');
     }
 
-    if (packageJson.dependencies?.['pptx-parser-ts']) {
+    if (packageJson.dependencies?.['jszip'] || packageJson.dependencies?.['pptx2json']) {
       score += 2;
       details.push('✓ PPTX parsing library installed');
     }
