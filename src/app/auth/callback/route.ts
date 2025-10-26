@@ -1,7 +1,9 @@
-import { NextResponse } from 'next/server'
+// src/app/auth/callback/route.ts
+import { handleCallback } from '@auth0/nextjs-auth0'
+import { NextRequest } from 'next/server'
 
-// Auth0 callback endpoint (stub)
-export async function GET() {
-  // TODO: exchange code for tokens and set cookies/session
-  return NextResponse.json({ ok: true, endpoint: 'auth/callback' })
+export const GET = async (req: NextRequest) => {
+  return handleCallback(req, {
+    redirectUri: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`
+  })
 }
