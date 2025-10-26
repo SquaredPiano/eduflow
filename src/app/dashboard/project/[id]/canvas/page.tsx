@@ -25,9 +25,9 @@ import { ArrowLeft, Save, Download, Upload, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Custom node components
-import { FileNode } from '@/components/canvas/FileNode';
+import FileNode from '@/components/canvas/FileNode';
 import { AgentNode } from '@/components/canvas/AgentNode';
-import { OutputNode } from '@/components/canvas/OutputNode';
+import OutputNode from '@/components/canvas/OutputNode';
 
 const nodeTypes = {
   fileNode: FileNode,

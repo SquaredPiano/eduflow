@@ -1,7 +1,7 @@
 "use client";
 import { Github, Menu, X } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -64,14 +64,12 @@ export const Navbar = ({
             <div className="flex w-full justify-between lg:w-auto">
               <div className="flex items-center gap-4">
                 <Link
-                  to="/"
+                  href="/"
                   aria-label="home"
                   className="flex items-center space-x-2 font-semibold text-xl"
-                  prefetch="viewport"
                 >
                   EduFlow
                 </Link>
-              </div>
               </div>
 
               <button
@@ -100,19 +98,19 @@ export const Navbar = ({
                 </ul>
               </div>
               <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                <Link
-                  to="https://github.com/eduflow"
+                <a
+                  href="https://github.com/eduflow"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center"
                 >
                   <Github className="w-5 h-5" />
-                </Link>
+                </a>
                 <Button
                   asChild
                   size="sm"
                 >
-                  <Link to={dashboardLink} prefetch="viewport">
+                  <Link href={dashboardLink}>
                     <span>{dashboardText}</span>
                   </Link>
                 </Button>
