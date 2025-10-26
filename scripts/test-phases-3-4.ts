@@ -75,8 +75,8 @@ async function testPhase3() {
         name: "TEST_sample_audio.mp3",
         type: "audio/mpeg",
         url: "https://example.com/test-audio.mp3", // Note: Using placeholder URL
-        key: "test-key-phases-3-4",
-        size: 1024,
+        key: "test-file-key-123", // UploadThing file key
+        size: 1024000, // 1MB placeholder
         userId: user.id,
         courseId: course.id,
       },
