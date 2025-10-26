@@ -55,11 +55,23 @@ export function AgentChatPanel({
       return response;
     },
     onSuccess: (data) => {
+      console.log('Chat response:', data);
       setMessages(prev => [
         ...prev,
         {
           role: 'assistant',
           content: data.message,
+          timestamp: new Date(),
+        },
+      ]);
+    },
+    onError: (error) => {
+      console.error('Chat error:', error);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Sorry, I encountered an error. Please try again.',
           timestamp: new Date(),
         },
       ]);
