@@ -1,18 +1,18 @@
 # 📋 EduFlow Implementation Strategy
-## Adapting YouPac AI to Educational Study Companion
+## Cloud-Based Educational Study Companion Platform
 
 ---
 
 ## 🎯 Executive Summary
 
-We're building **EduFlow AI** - a cloud-based study companion inspired by YouPac AI's innovative canvas-based approach. While YouPac focuses on video content packaging for YouTubers, we're adapting their architecture for educational course material transformation.
+We're building **EduFlow AI** - a cloud-based study companion that transforms course materials into interactive study resources using AI.
 
-### Key Adaptations:
-- **From**: Video content → Social media packaging
-- **To**: Course materials → Study resources (notes, flashcards, quizzes, slides)
+### Core Features:
+- **From**: Course materials (PDFs, slides, videos, audio)
+- **To**: Study resources (notes, flashcards, quizzes, slides)
 
-### Core Innovation from YouPac:
-✅ **Infinite Canvas UX** (React Flow) - Spatial organization beats linear chatbots  
+### Core Architecture:
+✅ **Infinite Canvas UX** (React Flow) - Spatial organization for better learning
 ✅ **Agent-Based Architecture** - Specialized AI workers for different tasks  
 ✅ **Real-time Processing** - Async job queues with progress indicators  
 ✅ **Export Pipeline** - Multi-format output generation  
@@ -365,7 +365,7 @@ pip3 install openai-whisper fastapi uvicorn
 
 ---
 
-### Phase 7: Infinite Canvas UI (Days 15-18) ← **YouPac INSPIRATION**
+### Phase 7: Infinite Canvas UI (Days 15-18)
 **Goal**: Build beautiful spatial UI with React Flow
 
 #### Components to Build:
@@ -561,23 +561,24 @@ Visual database browser at http://localhost:5555
 
 ---
 
-## 🎓 Key Differences from YouPac AI
+## 🎓 Key Platform Features
 
-| Aspect | YouPac AI | EduFlow AI |
-|--------|-----------|------------|
-| **Domain** | Video content creation | Educational study materials |
-| **Input** | Raw videos | PDFs, slides, videos, docs |
-| **AI Focus** | Content packaging (titles, thumbnails) | Study resource generation |
-| **Agents** | Title, thumbnail, script, etc. | Notes, flashcards, quiz, slides |
-| **Integration** | YouTube/Twitter | Canvas LMS |
-| **Export** | Social media formats | Study formats (PDF, Anki, etc.) |
-| **Backend** | Convex (serverless DB) | Supabase + Prisma |
-| **Transcription** | N/A (uses existing video data) | Self-hosted Whisper |
+| Aspect | EduFlow AI |
+|--------|------------|
+| **Domain** | Educational study materials |
+| **Input** | PDFs, slides, videos, audio files, documents |
+| **AI Focus** | Study resource generation using Gemini 2.5 |
+| **Agents** | Notes, flashcards, quiz, slides |
+| **Integration** | Canvas LMS sync |
+| **Export** | Study formats (PDF, Anki, CSV, PPTX) |
+| **Backend** | Supabase + Prisma ORM |
+| **Transcription** | ElevenLabs Speech-to-Text |
+| **AI Provider** | Google Gemini 2.5 Flash |
 
-### What We're Keeping from YouPac:
+### Core Architectural Patterns:
 ✅ **Infinite canvas UX** (React Flow)  
 ✅ **Agent-based architecture**  
-✅ **Spatial organization** (vs. linear chat)  
+✅ **Spatial organization** (interactive learning)  
 ✅ **Real-time progress indicators**  
 ✅ **Beautiful, modern UI**  
 

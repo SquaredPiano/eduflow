@@ -15,6 +15,7 @@ datasource db {
 }
 
 model User {
+<<<<<<< HEAD
   id        String   @id @default(cuid())
   email     String   @unique
   auth0Id   String   @unique
@@ -22,14 +23,25 @@ model User {
   courses   Course[]
   files     File[]
   createdAt DateTime @default(now())
+=======
+  id          String   @id @default(cuid())
+  email       String   @unique
+  auth0Id     String   @unique
+  canvasToken String?  // Encrypted Canvas API token
+  courses     Course[]
+  files       File[]
+  createdAt   DateTime @default(now())
+>>>>>>> 73fd6774087775a9ae48dd5586a68cfbdaa4f391
 }
 
 model Course {
-  id        String   @id @default(cuid())
-  name      String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  files     File[]
+  id         String   @id @default(cuid())
+  name       String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  canvasId   String?  // Canvas course ID
+  files      File[]
+  createdAt  DateTime @default(now())
 }
 
 model File {
@@ -41,8 +53,9 @@ model File {
   size        Int          // File size in bytes
   userId      String
   user        User         @relation(fields: [userId], references: [id])
-  courseId    String?      // Make optional since files can be uploaded without course
+  courseId    String?      // Optional - files can be uploaded without course or from Canvas
   course      Course?      @relation(fields: [courseId], references: [id])
+  canvasId    String?      // Canvas file ID
   transcripts Transcript[]
   createdAt   DateTime     @default(now())
 }

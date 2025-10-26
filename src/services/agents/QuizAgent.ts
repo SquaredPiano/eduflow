@@ -34,12 +34,31 @@ export class QuizAgent implements IAgent {
       const quiz = await this.modelClient.complete(prompt, {
         systemPrompt: AGENT_PROMPTS.quiz.system,
         temperature: 0.5, // Balanced for variety while maintaining accuracy
-        maxTokens: 4096,
+        maxTokens: 8192, // Increased for 10 questions with explanations
       });
+
+      // Extract JSON from response (handles markdown code blocks or extra text)
+      let jsonText = quiz.trim();
+      
+      // Remove markdown code block if present
+      if (jsonText.startsWith("```")) {
+        const lines = jsonText.split("\n");
+        jsonText = lines.slice(1, -1).join("\n"); // Remove first and last lines
+        if (jsonText.startsWith("json")) {
+          jsonText = jsonText.substring(4); // Remove "json" language identifier
+        }
+        jsonText = jsonText.trim();
+      }
+      
+      // Try to find JSON object if there's extra text
+      const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonText = jsonMatch[0];
+      }
 
       // Validate JSON structure
       try {
-        const parsed = JSON.parse(quiz);
+        const parsed = JSON.parse(jsonText);
         if (!parsed.questions || !Array.isArray(parsed.questions)) {
           throw new Error("Invalid quiz structure");
         }
@@ -58,11 +77,13 @@ export class QuizAgent implements IAgent {
             throw new Error("Invalid question structure");
           }
         }
+        
+        return jsonText; // Return cleaned JSON
       } catch (parseError) {
+        console.error("Quiz parsing error:", parseError);
+        console.error("Response received:", quiz.substring(0, 500));
         throw new Error("Failed to parse quiz JSON response");
       }
-
-      return quiz;
     } catch (error) {
       throw new Error(
         `Failed to generate quiz: ${error instanceof Error ? error.message : String(error)}`
