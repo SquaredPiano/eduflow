@@ -1,7 +1,7 @@
 // src/adapters/pptx.adapter.ts
 import JSZip from 'jszip';
 
-export class PPTXAdapterSimple {
+export class PPTXAdapter {
   async extractText(fileUrl: string): Promise<string> {
     try {
       console.log(`Extracting text from PPTX: ${fileUrl}`);
