@@ -27,7 +27,7 @@ export class GeminiAdapter implements IModelClient {
   async complete(prompt: string, options?: CompletionOptions): Promise<string> {
     try {
       const model = this.genAI.getGenerativeModel({
-        model: "gemini-1.5-pro",
+        model: "gemini-1.5-flash", // Changed from gemini-1.5-pro
         systemInstruction: options?.systemPrompt,
         generationConfig: {
           temperature: options?.temperature ?? 0.7,
