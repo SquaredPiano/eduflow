@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@auth0/auth0-react": "^2.8.0",
     "@auth0/nextjs-auth0": "^4.11.0",
     "@elevenlabs/elevenlabs-js": "^2.20.1",
     "@google/generative-ai": "^0.24.1",
