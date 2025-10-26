@@ -142,12 +142,53 @@ export default function EnhancedDashboardPage() {
           </div>
 
           {/* Main Tabs */}
-          <Tabs defaultValue="upload" className="space-y-4">
+          <Tabs defaultValue="projects" className="space-y-4">
             <TabsList>
+              <TabsTrigger value="projects">Projects</TabsTrigger>
               <TabsTrigger value="upload">Upload Files</TabsTrigger>
               <TabsTrigger value="files">My Files ({files.length})</TabsTrigger>
               <TabsTrigger value="generate">Generate Content</TabsTrigger>
             </TabsList>
+
+            {/* Projects Tab */}
+            <TabsContent value="projects" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Projects</CardTitle>
+                  <CardDescription>
+                    Create and manage your learning projects with AI-powered canvas
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Link href="/project/demo">
+                      <Button className="w-full" size="lg">
+                        <Sparkles className="mr-2 h-5 w-5" />
+                        Create New Project
+                      </Button>
+                    </Link>
+                    <div className="border-t pt-4">
+                      <p className="text-sm text-muted-foreground mb-4">Recent Projects</p>
+                      <div className="space-y-2">
+                        <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                          <Link href="/project/demo">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium">Demo Project</p>
+                                  <p className="text-sm text-muted-foreground">Click to explore the canvas interface</p>
+                                </div>
+                                <Button variant="ghost" size="sm">Open</Button>
+                              </div>
+                            </CardContent>
+                          </Link>
+                        </Card>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Upload Tab */}
             <TabsContent value="upload" className="space-y-4">
