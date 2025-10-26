@@ -1,10 +1,24 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { User, Mail, Key, Trash2 } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { User, Mail, Key, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import { api } from '@/lib/apiClient';
 
 interface UserData {
   user: {
@@ -16,6 +30,12 @@ interface UserData {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const [canvasUrl, setCanvasUrl] = useState('https://q.utoronto.ca');
+  const [canvasToken, setCanvasToken] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+
   const { data: userData } = useQuery<UserData>({
     queryKey: ['user'],
     queryFn: async () => {
@@ -24,6 +44,47 @@ export default function SettingsPage() {
       return response.json();
     },
   });
+
+  // Save Canvas settings mutation
+  const saveCanvasMutation = useMutation({
+    mutationFn: async () => {
+      return api.post('/api/user/canvas', {
+        canvasUrl,
+        canvasToken,
+      });
+    },
+    onSuccess: () => {
+      toast.success('Canvas settings saved successfully');
+    },
+    onError: () => {
+      toast.error('Failed to save Canvas settings');
+    },
+  });
+
+  // Delete account mutation
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      return api.delete('/api/user/account');
+    },
+    onSuccess: () => {
+      toast.success('Account deleted successfully');
+      // Redirect to logout after a brief delay
+      setTimeout(() => {
+        window.location.href = '/api/auth/logout';
+      }, 1500);
+    },
+    onError: () => {
+      toast.error('Failed to delete account');
+    },
+  });
+
+  const handleDeleteAccount = () => {
+    if (deleteConfirmation !== 'DELETE') {
+      toast.error('Please type DELETE to confirm');
+      return;
+    }
+    deleteAccountMutation.mutate();
+  };
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
@@ -101,11 +162,13 @@ export default function SettingsPage() {
                 <Label htmlFor="canvasUrl" className="text-gray-700">Canvas URL</Label>
                 <Input
                   id="canvasUrl"
-                  placeholder="https://canvas.instructure.com"
+                  placeholder="e.g., https://q.utoronto.ca or https://canvas.instructure.com"
+                  value={canvasUrl}
+                  onChange={(e) => setCanvasUrl(e.target.value)}
                   className="mt-1"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Your institution's Canvas LMS URL
+                  Your institution's Canvas LMS URL (e.g., Quercus for UofT)
                 </p>
               </div>
 
@@ -115,15 +178,21 @@ export default function SettingsPage() {
                   id="canvasToken"
                   type="password"
                   placeholder="Enter your Canvas API token"
+                  value={canvasToken}
+                  onChange={(e) => setCanvasToken(e.target.value)}
                   className="mt-1"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Generate a token from Canvas → Settings → Approved Integrations
+                  Generate a token from Canvas → Account → Settings → Approved Integrations → New Access Token
                 </p>
               </div>
 
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                Save Canvas Settings
+              <Button 
+                onClick={() => saveCanvasMutation.mutate()}
+                disabled={saveCanvasMutation.isPending || !canvasUrl || !canvasToken}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {saveCanvasMutation.isPending ? 'Saving...' : 'Save Canvas Settings'}
               </Button>
             </div>
           </div>
@@ -141,7 +210,11 @@ export default function SettingsPage() {
                   <h3 className="font-medium text-red-600">Delete Account</h3>
                   <p className="text-sm text-gray-700">Permanently delete your account and all data. This action cannot be undone.</p>
                 </div>
-                <Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-100">
+                <Button 
+                  variant="outline" 
+                  className="border-red-300 text-red-600 hover:bg-red-100"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Account
                 </Button>
@@ -150,6 +223,56 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Account Permanently?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                This will permanently delete your account and all associated data including:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                <li>All projects and files</li>
+                <li>AI-generated content (notes, flashcards, quizzes, slides)</li>
+                <li>Canvas integrations and settings</li>
+                <li>Account preferences</li>
+              </ul>
+              <p className="font-semibold text-red-600">
+                This action cannot be undone!
+              </p>
+              <div className="mt-4">
+                <Label htmlFor="deleteConfirm" className="text-sm font-medium">
+                  Type <span className="font-bold text-red-600">DELETE</span> to confirm:
+                </Label>
+                <Input
+                  id="deleteConfirm"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  placeholder="DELETE"
+                  className="mt-2 font-mono"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteConfirmation('')}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAccount}
+              disabled={deleteConfirmation !== 'DELETE' || deleteAccountMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteAccountMutation.isPending ? 'Deleting...' : 'Delete Account'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
