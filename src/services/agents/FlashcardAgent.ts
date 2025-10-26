@@ -33,9 +33,28 @@ export class FlashcardAgent implements IAgent {
         maxTokens: 3072,
       });
 
+      // Extract JSON from response (handles markdown code blocks or extra text)
+      let jsonText = flashcards.trim();
+      
+      // Remove markdown code block if present
+      if (jsonText.startsWith("```")) {
+        const lines = jsonText.split("\n");
+        jsonText = lines.slice(1, -1).join("\n"); // Remove first and last lines
+        if (jsonText.startsWith("json")) {
+          jsonText = jsonText.substring(4); // Remove "json" language identifier
+        }
+        jsonText = jsonText.trim();
+      }
+      
+      // Try to find JSON array if there's extra text
+      const jsonMatch = jsonText.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        jsonText = jsonMatch[0];
+      }
+
       // Validate JSON structure
       try {
-        const parsed = JSON.parse(flashcards);
+        const parsed = JSON.parse(jsonText);
         if (!Array.isArray(parsed)) {
           throw new Error("Response is not an array");
         }
@@ -46,11 +65,13 @@ export class FlashcardAgent implements IAgent {
             throw new Error("Invalid flashcard structure");
           }
         }
+        
+        return jsonText; // Return cleaned JSON
       } catch (parseError) {
+        console.error("Flashcard parsing error:", parseError);
+        console.error("Response received:", flashcards.substring(0, 500));
         throw new Error("Failed to parse flashcard JSON response");
       }
-
-      return flashcards;
     } catch (error) {
       throw new Error(
         `Failed to generate flashcards: ${error instanceof Error ? error.message : String(error)}`
