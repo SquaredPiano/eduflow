@@ -17,7 +17,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
@@ -32,7 +32,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="container mx-auto px-4 py-8">
         {/* Header with Logout */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
@@ -205,12 +205,12 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="mt-8 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6">
+          <div className="mt-8 bg-linear-to-r from-indigo-50 to-purple-50 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Next Steps:</h3>
             <ul className="space-y-2">
               <li className="flex items-start">
                 <svg
-                  className="h-5 w-5 text-indigo-600 mr-2 mt-0.5 flex-shrink-0"
+                  className="h-5 w-5 text-indigo-600 mr-2 mt-0.5 shrink-0"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -228,7 +228,7 @@ export default function DashboardPage() {
               </li>
               <li className="flex items-start">
                 <svg
-                  className="h-5 w-5 text-indigo-600 mr-2 mt-0.5 flex-shrink-0"
+                  className="h-5 w-5 text-indigo-600 mr-2 mt-0.5 shrink-0"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -246,7 +246,7 @@ export default function DashboardPage() {
               </li>
               <li className="flex items-start">
                 <svg
-                  className="h-5 w-5 text-indigo-600 mr-2 mt-0.5 flex-shrink-0"
+                  className="h-5 w-5 text-indigo-600 mr-2 mt-0.5 shrink-0"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

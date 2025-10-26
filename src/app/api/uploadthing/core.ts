@@ -2,9 +2,54 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
+import { TextExtractorAdapter } from "@/adapters/text-extractor.adapter";
 
 const f = createUploadthing();
 const prisma = new PrismaClient();
+
+/**
+ * Check if a file type should have text extracted
+ */
+function shouldExtractText(mimeType: string): boolean {
+  const textExtractionTypes = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+  return textExtractionTypes.includes(mimeType);
+}
+
+/**
+ * Extract text from a file in the background and save to database
+ */
+async function extractTextInBackground(
+  fileId: string,
+  fileUrl: string,
+  mimeType: string
+): Promise<void> {
+  try {
+    console.log(`🔍 Starting background text extraction for file ${fileId}`);
+    
+    const textExtractor = new TextExtractorAdapter();
+    const extractedText = await textExtractor.extractText(fileUrl, mimeType);
+    
+    if (extractedText && extractedText.trim().length > 0) {
+      await prisma.transcript.create({
+        data: {
+          content: extractedText,
+          fileId: fileId,
+        },
+      });
+      
+      console.log(`✅ Text extraction complete for ${fileId} (${extractedText.length} characters)`);
+    } else {
+      console.log(`ℹ️ No text extracted from file ${fileId}`);
+    }
+  } catch (error) {
+    console.error(`❌ Text extraction failed for ${fileId}:`, error);
+    throw error;
+  }
+}
 
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
@@ -67,7 +112,16 @@ export const ourFileRouter = {
           },
         });
 
-        console.log("File saved to database with ID:", savedFile.id);
+        console.log("✅ File saved to database with ID:", savedFile.id);
+
+        // Trigger async text extraction for supported file types
+        // Don't await this - let it happen in the background
+        if (file.type && shouldExtractText(file.type)) {
+          extractTextInBackground(savedFile.id, file.url, file.type)
+            .catch((error: unknown) => {
+              console.error(`⚠️ Background text extraction failed for ${savedFile.id}:`, error);
+            });
+        }
 
         // Return data to client
         return { 
@@ -77,7 +131,7 @@ export const ourFileRouter = {
           fileKey: file.key,
         };
       } catch (error) {
-        console.error("Failed to save file to database:", error);
+        console.error("❌ Failed to save file to database:", error);
         // Don't throw here - file is already uploaded
         // Return what we can
         return {
