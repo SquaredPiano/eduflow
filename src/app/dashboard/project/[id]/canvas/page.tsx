@@ -40,14 +40,14 @@ import { toast } from 'sonner';
 
 // Custom node components
 import FileNode from '@/components/canvas/FileNode';
-import { AgentNode } from '@/components/canvas/AgentNode';
+import { EducationAgentNode } from '@/components/canvas/EducationAgentNode';
 import OutputNode from '@/components/canvas/OutputNode';
 import { FloatingChat } from '@/components/canvas/FloatingChat';
 import { AgentSidebar, AgentSidebarToggle } from '@/components/canvas/AgentSidebar';
 
 const nodeTypes: NodeTypes = {
   fileNode: FileNode,
-  agentNode: AgentNode,
+  agentNode: EducationAgentNode,
   outputNode: OutputNode,
 };
 
