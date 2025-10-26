@@ -2,6 +2,7 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
 const f = createUploadthing();
 
@@ -62,8 +63,9 @@ export const ourFileRouter = {
     "application/vnd.openxmlformats-officedocument.presentationml.presentation": { maxFileSize: "32MB", maxFileCount: 10 },
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": { maxFileSize: "16MB", maxFileCount: 10 },
   })
+    .input(z.object({ projectId: z.string().optional() }))
     // Set permissions and file types for this FileRoute
-    .middleware(async ({ req }) => {
+    .middleware(async ({ req, input }) => {
       // This code runs on your server before upload
       const session = await getSession();
       
@@ -90,10 +92,25 @@ export const ourFileRouter = {
         throw new UploadThingError("User not found in database");
       }
       
+      // Validate projectId if provided
+      if (input?.projectId) {
+        const project = await prisma.project.findFirst({
+          where: {
+            id: input.projectId,
+            userId: dbUser.id,
+          },
+        });
+        
+        if (!project) {
+          throw new UploadThingError("Project not found or access denied");
+        }
+      }
+      
       // Return user metadata for use in onUploadComplete
       return { 
         userId: dbUser.id,
         userEmail: dbUser.email || '',
+        projectId: input?.projectId,
       };
     })
     .onUploadComplete(async ({ metadata, file }) => {
@@ -111,7 +128,9 @@ export const ourFileRouter = {
             url: file.url,
             key: file.key,
             size: file.size,
+            mimeType: file.type,
             userId: metadata.userId,
+            projectId: metadata.projectId,
             // courseId is optional - can be associated later
           },
         });

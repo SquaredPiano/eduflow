@@ -21,6 +21,7 @@ export function FileUploadZone({ projectId, onUploadComplete }: FileUploadZonePr
       <div className="p-8">
         <UploadDropzone
           endpoint="learningMaterials"
+          input={{ projectId }}
           onClientUploadComplete={(res) => {
             if (res) {
               toast.success(`${res.length} file(s) uploaded successfully!`);

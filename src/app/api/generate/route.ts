@@ -15,6 +15,7 @@ import { GenerateService, AgentType } from "@/services/generate.service";
 import { GeminiAdapter } from "@/adapters/gemini.adapter";
 import { OpenRouterAdapter } from "@/adapters/openrouter.adapter";
 import { IModelClient } from "@/domain/interfaces/IModelClient";
+import { prisma } from "@/lib/prisma";
 
 /**
  * POST /api/generate
@@ -29,12 +30,39 @@ import { IModelClient } from "@/domain/interfaces/IModelClient";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { transcriptId, type, options, agentContext, userContext, previousOutputId } = body;
+    const { transcriptId, fileId, type, options, agentContext, userContext, previousOutputId } = body;
 
-    // Validate required fields
-    if (!transcriptId) {
+    // Resolve transcriptId from fileId if needed
+    let resolvedTranscriptId = transcriptId;
+    
+    if (!resolvedTranscriptId && fileId) {
+      // Fetch the transcript for this file
+      const file = await prisma.file.findUnique({
+        where: { id: fileId },
+        include: { transcripts: { take: 1, orderBy: { createdAt: 'desc' } } },
+      });
+      
+      if (!file) {
+        return NextResponse.json(
+          { error: "File not found" },
+          { status: 404 }
+        );
+      }
+      
+      if (file.transcripts.length === 0) {
+        return NextResponse.json(
+          { error: "File has not been transcribed yet. Please wait for processing to complete." },
+          { status: 400 }
+        );
+      }
+      
+      resolvedTranscriptId = file.transcripts[0].id;
+    }
+
+    // Validate that we have a transcriptId
+    if (!resolvedTranscriptId) {
       return NextResponse.json(
-        { error: "transcriptId is required" },
+        { error: "Either transcriptId or fileId is required" },
         { status: 400 }
       );
     }
@@ -86,7 +114,7 @@ export async function POST(req: NextRequest) {
     if (type) {
       // Generate single type with optional context
       const output = await generateService.generate(
-        transcriptId,
+        resolvedTranscriptId,
         type as AgentType,
         {
           ...options,
@@ -107,7 +135,7 @@ export async function POST(req: NextRequest) {
       });
     } else {
       // Generate all types
-      const outputs = await generateService.generateAll(transcriptId);
+      const outputs = await generateService.generateAll(resolvedTranscriptId);
 
       return NextResponse.json({
         success: true,

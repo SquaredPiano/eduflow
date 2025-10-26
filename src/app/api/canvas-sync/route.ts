@@ -1,50 +1,92 @@
-import { NextResponse } from 'next/server'
-import { CanvasAdapter } from '@/adapters/canvas.adapter'
-import { SupabaseAdapter } from '@/adapters/supabase.adapter'
-import { CanvasService } from '@/services/canvas.service'
-import { logger } from '@/lib/logger'
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
+import { logger } from '@/lib/logger';
 
-const CANVAS_BASE_URL = process.env.CANVAS_BASE_URL || 'https://q.utoronto.ca'
+const CANVAS_BASE_URL = process.env.CANVAS_BASE_URL || 'https://q.utoronto.ca';
 
-export async function POST(req: Request) {
+async function getSessionUser() {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('appSession');
+  
+  if (!sessionCookie) {
+    return null;
+  }
+  
   try {
-    // TODO: Get actual user from session once Auth0 is fully implemented
-    const { canvasToken, userId } = await req.json()
+    const session = JSON.parse(sessionCookie.value);
+    const dbUser = await prisma.user.findUnique({
+      where: { auth0Id: session.user.sub },
+    });
+    return dbUser;
+  } catch {
+    return null;
+  }
+}
 
-    if (!canvasToken) {
-      return NextResponse.json({ error: 'Canvas token required' }, { status: 400 })
+export async function POST(req: NextRequest) {
+  try {
+    const user = await getSessionUser();
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID required' }, { status: 400 })
+    const { projectId, canvasUrl, accessToken, fileIds } = await req.json();
+
+    // Validate inputs
+    if (!projectId || !canvasUrl || !accessToken || !fileIds?.length) {
+      return NextResponse.json(
+        { error: 'Missing required fields: projectId, canvasUrl, accessToken, and fileIds are required' },
+        { status: 400 }
+      );
     }
 
-    // Initialize services
-    const canvasAdapter = new CanvasAdapter(CANVAS_BASE_URL)
-    const repository = new SupabaseAdapter()
-    const canvasService = new CanvasService(canvasAdapter, repository)
+    // Verify project ownership
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        userId: user.id,
+      },
+    });
 
-    // Verify and store token
-    const isValid = await canvasService.verifyAndStoreToken(userId, canvasToken)
-    if (!isValid) {
-      return NextResponse.json({ error: 'Invalid Canvas token' }, { status: 400 })
+    if (!project) {
+      return NextResponse.json(
+        { error: 'Project not found or access denied' },
+        { status: 404 }
+      );
     }
 
-    // Sync courses
-    const result = await canvasService.syncCourses(userId, canvasToken)
+    // TODO: Implement Canvas API integration
+    // For now, we'll log the attempt and return a placeholder response
+    logger.info(`Canvas sync initiated for project ${projectId} by user ${user.id}`, {
+      canvasUrl,
+      fileCount: fileIds.length,
+    });
 
-    logger.info(`Canvas sync complete for user ${userId}`, result)
+    // Placeholder: In a real implementation, this would:
+    // 1. Fetch file metadata from Canvas API for each fileId
+    // 2. Download the files
+    // 3. Upload to UploadThing
+    // 4. Create File records in database with projectId
+    
+    const filesAdded = 0; // Placeholder
+    
+    logger.info(`Canvas sync complete for project ${projectId}`, {
+      filesAdded,
+    });
 
     return NextResponse.json({
-      ok: true,
-      coursesAdded: result.coursesAdded,
-      filesAdded: result.filesAdded
-    })
+      success: true,
+      filesAdded,
+      projectId,
+      message: 'Canvas import feature is under development. Files will be imported soon.',
+    });
   } catch (error) {
-    logger.error('Canvas sync error:', error)
+    logger.error('Canvas sync error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Canvas sync failed' },
       { status: 500 }
-    )
+    );
   }
 }
