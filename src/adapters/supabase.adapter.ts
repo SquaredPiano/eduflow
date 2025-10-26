@@ -41,10 +41,24 @@ export class SupabaseAdapter {
     name: string
     type: string
     url: string
-    courseId: string
+    key: string
+    size: number
+    userId: string
+    courseId?: string
     canvasId?: string
   }) {
-    return prisma.file.create({ data })
+    return prisma.file.create({ 
+      data: {
+        name: data.name,
+        type: data.type,
+        url: data.url,
+        key: data.key,
+        size: data.size,
+        userId: data.userId,
+        courseId: data.courseId,
+        canvasId: data.canvasId,
+      }
+    })
   }
 
   async getFileById(fileId: string) {
