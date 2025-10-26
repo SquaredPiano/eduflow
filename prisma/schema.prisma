@@ -18,6 +18,7 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   auth0Id   String   @unique
+  name      String?
   courses   Course[]
   files     File[]
   createdAt DateTime @default(now())
