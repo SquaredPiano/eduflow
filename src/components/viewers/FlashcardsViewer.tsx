@@ -5,6 +5,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Download, Shuffle } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Flashcard {
   front: string;
@@ -15,9 +21,10 @@ interface Flashcard {
 interface FlashcardsViewerProps {
   flashcards: Flashcard[];
   title?: string;
+  outputId?: string; // Optional: for server-side downloads
 }
 
-export function FlashcardsViewer({ flashcards, title = 'Flashcards' }: FlashcardsViewerProps) {
+export function FlashcardsViewer({ flashcards, title = 'Flashcards', outputId }: FlashcardsViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [learned, setLearned] = useState<Set<number>>(new Set());
@@ -67,6 +74,53 @@ export function FlashcardsViewer({ flashcards, title = 'Flashcards' }: Flashcard
     toast.success('Exported to Anki format');
   };
 
+  const handleServerDownload = async (format: string) => {
+    if (!outputId) {
+      toast.error('Cannot download: Output ID not available');
+      return;
+    }
+
+    try {
+      toast.loading('Generating download...');
+      
+      const response = await fetch('/api/download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          outputId,
+          format,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      // Get the filename from the response headers
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+        : `flashcards-${format}-${Date.now()}`;
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.dismiss();
+      toast.success(`Downloaded ${format.toUpperCase()} file`);
+    } catch (error) {
+      toast.dismiss();
+      toast.error(`Failed to download: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   if (!flashcards || flashcards.length === 0) {
     return (
       <Card className="p-12 text-center">
@@ -89,10 +143,30 @@ export function FlashcardsViewer({ flashcards, title = 'Flashcards' }: Flashcard
             <Shuffle className="mr-2 h-4 w-4" />
             Shuffle
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportAnki}>
-            <Download className="mr-2 h-4 w-4" />
-            Export to Anki
-          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportAnki}>
+                Anki Text (.txt)
+              </DropdownMenuItem>
+              {outputId && (
+                <>
+                  <DropdownMenuItem onClick={() => handleServerDownload('csv')}>
+                    CSV Spreadsheet (.csv)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleServerDownload('anki-enhanced')}>
+                    Enhanced Anki (.txt)
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

@@ -5,6 +5,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Download, Maximize, Grid3x3 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Slide {
   title: string;
@@ -15,9 +21,10 @@ interface Slide {
 interface SlidesViewerProps {
   slides: Slide[];
   title?: string;
+  outputId?: string; // Optional: for server-side downloads
 }
 
-export function SlidesViewer({ slides, title = 'Presentation Slides' }: SlidesViewerProps) {
+export function SlidesViewer({ slides, title = 'Presentation Slides', outputId }: SlidesViewerProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
@@ -41,6 +48,53 @@ export function SlidesViewer({ slides, title = 'Presentation Slides' }: SlidesVi
   const handleExportPPTX = () => {
     // In a real implementation, you'd use a library like pptxgenjs
     toast.info('PowerPoint export coming soon!');
+  };
+
+  const handleServerDownload = async (format: string) => {
+    if (!outputId) {
+      toast.error('Cannot download: Output ID not available');
+      return;
+    }
+
+    try {
+      toast.loading('Generating presentation...');
+      
+      const response = await fetch('/api/download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          outputId,
+          format,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      // Get the filename from the response headers
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+        : `presentation-${format}-${Date.now()}`;
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.dismiss();
+      toast.success(`Downloaded ${format.toUpperCase()} file`);
+    } catch (error) {
+      toast.dismiss();
+      toast.error(`Failed to download: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const handleFullscreen = () => {
@@ -105,10 +159,31 @@ export function SlidesViewer({ slides, title = 'Presentation Slides' }: SlidesVi
               <Maximize className="mr-2 h-4 w-4" />
               Present
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExportPPTX}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {outputId ? (
+                  <>
+                    <DropdownMenuItem onClick={() => handleServerDownload('pptx')}>
+                      PowerPoint (.pptx)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleServerDownload('pdf')}>
+                      PDF Document (.pdf)
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem onClick={handleExportPPTX}>
+                    PowerPoint (.pptx)
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       )}

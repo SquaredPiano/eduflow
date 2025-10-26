@@ -4,8 +4,14 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+import { CheckCircle, XCircle, RotateCcw, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface QuizQuestion {
   question: string;
@@ -17,9 +23,10 @@ interface QuizQuestion {
 interface QuizViewerProps {
   questions: QuizQuestion[];
   title?: string;
+  outputId?: string; // Optional: for server-side downloads
 }
 
-export function QuizViewer({ questions, title = 'Practice Quiz' }: QuizViewerProps) {
+export function QuizViewer({ questions, title = 'Practice Quiz', outputId }: QuizViewerProps) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -62,6 +69,53 @@ export function QuizViewer({ questions, title = 'Practice Quiz' }: QuizViewerPro
     setCompleted(false);
   };
 
+  const handleServerDownload = async (format: string) => {
+    if (!outputId) {
+      toast.error('Cannot download: Output ID not available');
+      return;
+    }
+
+    try {
+      toast.loading('Generating download...');
+      
+      const response = await fetch('/api/download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          outputId,
+          format,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      // Get the filename from the response headers
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+        : `quiz-${format}-${Date.now()}`;
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.dismiss();
+      toast.success(`Downloaded ${format.toUpperCase()} file`);
+    } catch (error) {
+      toast.dismiss();
+      toast.error(`Failed to download: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   if (completed) {
     const percentage = (score / questions.length) * 100;
     return (
@@ -89,9 +143,33 @@ export function QuizViewer({ questions, title = 'Practice Quiz' }: QuizViewerPro
               <RotateCcw className="mr-2 h-4 w-4" />
               Retry Quiz
             </Button>
-            <Button variant="outline" onClick={() => window.print()}>
-              Print Results
-            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => window.print()}>
+                  Print Results
+                </DropdownMenuItem>
+                {outputId && (
+                  <>
+                    <DropdownMenuItem onClick={() => handleServerDownload('csv')}>
+                      Quiz CSV (.csv)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleServerDownload('answer-key')}>
+                      Answer Key (.csv)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleServerDownload('pdf')}>
+                      PDF Document (.pdf)
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardContent>
       </Card>

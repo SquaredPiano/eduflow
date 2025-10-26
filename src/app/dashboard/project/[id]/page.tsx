@@ -382,24 +382,28 @@ export default function ProjectDetailPage() {
                 <NotesViewer 
                   content={viewingOutput.content.content || viewingOutput.content}
                   title={viewingOutput.content.title}
+                  outputId={viewingOutput.id}
                 />
               )}
               {viewingOutput.type === 'flashcards' && (
                 <FlashcardsViewer 
                   flashcards={viewingOutput.content.flashcards || viewingOutput.content}
                   title={viewingOutput.content.title}
+                  outputId={viewingOutput.id}
                 />
               )}
               {viewingOutput.type === 'quiz' && (
                 <QuizViewer 
                   questions={viewingOutput.content.questions || viewingOutput.content}
                   title={viewingOutput.content.title}
+                  outputId={viewingOutput.id}
                 />
               )}
               {viewingOutput.type === 'slides' && (
                 <SlidesViewer 
                   slides={viewingOutput.content.slides || viewingOutput.content}
                   title={viewingOutput.content.title}
+                  outputId={viewingOutput.id}
                 />
               )}
             </div>

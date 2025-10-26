@@ -97,9 +97,26 @@ model Output {
   file         File?       @relation(fields: [fileId], references: [id], onDelete: Cascade)
   transcriptId String?
   transcript   Transcript? @relation(fields: [transcriptId], references: [id])
+  
+  // Context and regeneration fields
+  userContext     String?   // User's additional instructions (e.g., "Make this quiz harder")
+  agentContext    Json?     // Context from other connected agents
+  previousOutputId String?  // Link to previous version for regeneration
+  version         Int       @default(1) // Version number for tracking regenerations
+  
+  // Downloadable artifact fields
+  artifactFileId String?    // Reference to generated file (UploadThing/storage key)
+  artifactMimeType String?  // MIME type of generated artifact
+  artifactFileName String?  // Original filename of artifact
+  artifactFormat   String?  // Format: json, md, pptx, docx, pdf, csv, anki-txt
+  artifactStatus   String   @default("none") // none, pending, ready, failed
+  artifactError    String?  // Error message if generation failed
+  
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @default(now()) @updatedAt
 
   @@index([projectId])
   @@index([fileId])
+  @@index([transcriptId])
+  @@index([previousOutputId])
 }

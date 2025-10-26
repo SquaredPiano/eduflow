@@ -351,25 +351,89 @@ export default function CanvasPage() {
 
     setIsGenerating(true);
     try {
-      await api.post('/api/generate', {
-        fileId: project.files[0].id,
+      // Step 1: Get transcript ID from file ID
+      const transcriptResponse = await api.get<{ success: boolean; transcript: { id: string; content: string } }>(
+        `/api/files/${project.files[0].id}/transcript`
+      );
+      
+      if (!transcriptResponse.transcript) {
+        toast.error('No transcript found. Please wait for file processing to complete.');
+        setIsGenerating(false);
+        return;
+      }
+      
+      const transcriptId = transcriptResponse.transcript.id;
+
+      // Step 2: Call generate API with correct transcriptId
+      const generateResponse = await api.post<{
+        success: boolean;
+        output: {
+          id: string;
+          type: string;
+          content: any;
+          transcriptId: string;
+        };
+      }>('/api/generate', {
+        transcriptId,
         type,
       });
 
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      toast.success(`Generating ${type}...`);
+      const output = generateResponse.output;
 
-      // GSAP: Pulse animation on agent node
+      // Step 3: Update node with generated content
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === `agent-${type}`) {
+            // Extract preview content based on type
+            let preview = '';
+            try {
+              const content = typeof output.content === 'string' 
+                ? JSON.parse(output.content) 
+                : output.content;
+              
+              if (type === 'flashcards' && Array.isArray(content)) {
+                preview = content[0]?.front || 'Flashcards generated';
+              } else if (type === 'quiz' && content.questions) {
+                preview = content.questions[0]?.question || 'Quiz generated';
+              } else if (type === 'notes' && typeof content === 'string') {
+                preview = content.substring(0, 100);
+              } else if (type === 'slides' && content.slides) {
+                preview = `${content.slides.length} slides generated`;
+              }
+            } catch {
+              preview = 'Content generated successfully';
+            }
+
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                draft: preview,
+                outputId: output.id,
+                status: 'ready',
+              },
+            };
+          }
+          return node;
+        })
+      );
+
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      toast.success(`${type} generated successfully!`);
+
+      // GSAP: Success animation on agent node
       const tl = gsap.timeline();
       tl.to(`#agent-${type}`, {
         scale: 1.1,
         duration: 0.3,
         yoyo: true,
-        repeat: 5,
+        repeat: 2,
         ease: 'power2.inOut',
       });
     } catch (error) {
-      toast.error('Failed to start generation');
+      console.error('Generation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate content';
+      toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
     }
@@ -379,9 +443,48 @@ export default function CanvasPage() {
     router.push(`/dashboard/project/${projectId}?tab=outputs&type=${type}`);
   };
 
-  const handleDownloadOutput = (outputId: string) => {
-    toast.info('Downloading output...');
-    // TODO: Implement download
+  const handleDownloadOutput = async (outputId: string, format?: 'pdf' | 'anki' | 'csv' | 'pptx') => {
+    if (!outputId) {
+      toast.error('No output to download');
+      return;
+    }
+
+    // Default format based on type or use provided format
+    const downloadFormat = format || 'pdf';
+
+    try {
+      toast.loading('Generating download...');
+
+      const response = await fetch('/api/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outputId, format: downloadFormat }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      // Get filename from Content-Disposition header
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+      const filename = filenameMatch?.[1] || `eduflow-export.${downloadFormat}`;
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Downloaded ${downloadFormat.toUpperCase()} file`);
+    } catch (error) {
+      toast.error(`Failed to download: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const saveCanvas = async () => {
