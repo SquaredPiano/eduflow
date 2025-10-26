@@ -46,5 +46,11 @@
   },
   "overrides": {
     "effect": "3.18.4"
+  },
+  "text-dependencies": {
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.8.0",
+    "pptx2json": "^1.0.0",
+    "jszip": "^3.10.1"
   }
 }
