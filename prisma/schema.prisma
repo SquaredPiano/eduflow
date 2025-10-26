@@ -19,6 +19,7 @@ model User {
   email       String    @unique
   auth0Id     String    @unique
   name        String?
+  canvasUrl   String?   // Canvas LMS instance URL
   canvasToken String?   // Encrypted Canvas API token
   courses     Course[]
   files       File[]
