@@ -10,14 +10,27 @@
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.8.0",
+    "@auth0/nextjs-auth0": "^4.11.0",
     "@elevenlabs/elevenlabs-js": "^2.20.1",
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.18.0",
+    "@supabase/supabase-js": "^2.76.1",
+    "@tanstack/react-query": "^5.90.5",
     "@uploadthing/react": "^7.3.3",
+    "@xyflow/react": "^12.9.0",
+    "axios": "^1.12.2",
+    "framer-motion": "^12.23.24",
+    "jspdf": "^3.0.3",
+    "lucide-react": "^0.548.0",
+    "mammoth": "^1.11.0",
     "next": "16.0.0",
+    "pdf-parse": "^2.4.5",
     "prisma": "^6.18.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "uploadthing": "^7.7.4"
+    "uploadthing": "^7.7.4",
+    "zod": "^4.1.12",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
