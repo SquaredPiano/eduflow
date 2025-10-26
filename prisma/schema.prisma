@@ -14,11 +14,12 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
- model User {
+model User {
   id        String   @id @default(cuid())
   email     String   @unique
   auth0Id   String   @unique
   courses   Course[]
+  files     File[]
   createdAt DateTime @default(now())
 }
 
@@ -35,8 +36,12 @@ model File {
   name        String
   type        String       // pdf, pptx, mp4, docx
   url         String
-  courseId    String
-  course      Course       @relation(fields: [courseId], references: [id])
+  key         String       // UploadThing file key for deletion
+  size        Int          // File size in bytes
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  courseId    String?      // Make optional since files can be uploaded without course
+  course      Course?      @relation(fields: [courseId], references: [id])
   transcripts Transcript[]
   createdAt   DateTime     @default(now())
 }
