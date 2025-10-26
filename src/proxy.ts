@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { auth0 } from "./lib/auth0";
 import { syncUserToDatabase } from "./lib/userSync";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Let Auth0 handle its own routes first
   const response = await auth0.middleware(request);
   
