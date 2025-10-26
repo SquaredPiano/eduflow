@@ -29,8 +29,8 @@ export class SlidesAgent implements IAgent {
     try {
       const slides = await this.modelClient.complete(prompt, {
         systemPrompt: AGENT_PROMPTS.slides.system,
-        temperature: 0.4, // Lower temperature for focused, concise output
-        maxTokens: 2048,
+        temperature: 0.4, // Lower temperature for structured output
+        maxTokens: 4096, // Increased for 8-12 slides
       });
 
       // Extract JSON from response (handles markdown code blocks or extra text)
