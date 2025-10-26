@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/dashboard', icon: Home, label: 'Home' },
+  { href: '/dashboard/home', icon: Home, label: 'Home' },
   { href: '/dashboard/projects', icon: FolderKanban, label: 'Projects' },
   { href: '/dashboard/canvas', icon: Network, label: 'Flow Canvas' },
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },

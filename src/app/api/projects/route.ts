@@ -12,7 +12,14 @@ async function getSessionUser() {
   
   try {
     const session = JSON.parse(sessionCookie.value);
-    return session.user;
+    const auth0User = session.user;
+    
+    // Get the database user by Auth0 ID
+    const dbUser = await prisma.user.findUnique({
+      where: { auth0Id: auth0User.sub },
+    });
+    
+    return dbUser;
   } catch {
     return null;
   }
@@ -31,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     const projects = await prisma.project.findMany({
       where: {
-        userId: user.sub,
+        userId: user.id,
         ...(includeArchived ? {} : { archived: false }),
       },
       include: {
@@ -71,7 +78,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: name.trim(),
         description: description?.trim() || null,
-        userId: user.sub,
+        userId: user.id,
       },
     });
 

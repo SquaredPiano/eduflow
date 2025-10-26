@@ -6,9 +6,9 @@ import { useEffect } from 'react';
 export default function DashboardPage() {
   const router = useRouter();
 
-  // Redirect to projects page (the main view)
+  // Redirect to home page (the main view)
   useEffect(() => {
-    router.push('/dashboard/projects');
+    router.push('/dashboard/home');
   }, [router]);
 
   return null;
