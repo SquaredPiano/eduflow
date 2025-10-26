@@ -1,29 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@auth0/nextjs-auth0';
 import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
 
-export const runtime = 'edge';
+async function getSessionUser() {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('appSession');
+  
+  if (!sessionCookie) {
+    return null;
+  }
+  
+  try {
+    const session = JSON.parse(sessionCookie.value);
+    const auth0User = session.user;
+    
+    // Get the database user by Auth0 ID
+    const dbUser = await prisma.user.findUnique({
+      where: { auth0Id: auth0User.sub },
+    });
+    
+    return dbUser;
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
-    if (!session?.user) {
+    const user = await getSessionUser();
+    
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const project = await prisma.project.findFirst({
       where: {
-        id: params.id,
-        userId: session.user.sub,
+        id,
+        userId: user.id,
       },
       include: {
         files: {
           orderBy: { createdAt: 'desc' },
         },
         outputs: {
+          include: {
+            file: true,
+          },
           orderBy: { createdAt: 'desc' },
         },
       },
@@ -45,22 +72,24 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
-    if (!session?.user) {
+    const user = await getSessionUser();
+    
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { name, description, archived } = body;
 
     // Verify ownership
     const existingProject = await prisma.project.findFirst({
       where: {
-        id: params.id,
-        userId: session.user.sub,
+        id,
+        userId: user.id,
       },
     });
 
@@ -69,7 +98,7 @@ export async function PATCH(
     }
 
     const project = await prisma.project.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(name !== undefined && { name: name.trim() }),
         ...(description !== undefined && { description: description?.trim() || null }),
@@ -89,19 +118,22 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
-    if (!session?.user) {
+    const user = await getSessionUser();
+    
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { id } = await params;
 
     // Verify ownership before deleting
     const existingProject = await prisma.project.findFirst({
       where: {
-        id: params.id,
-        userId: session.user.sub,
+        id,
+        userId: user.id,
       },
     });
 
@@ -110,7 +142,7 @@ export async function DELETE(
     }
 
     await prisma.project.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

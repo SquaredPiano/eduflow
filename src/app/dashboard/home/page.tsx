@@ -67,7 +67,7 @@ export default function DashboardHome() {
       title: 'Upload Materials',
       description: 'Add PDFs, videos, documents, or import from Canvas',
       completed: hasFiles,
-      link: hasProjects ? `/dashboard/canvas?project=${projects[0]?.id}` : '/dashboard/projects',
+      link: hasProjects ? `/dashboard/project/${projects[0]?.id}` : '/dashboard/projects',
       icon: Sparkles,
     },
     {
@@ -75,7 +75,7 @@ export default function DashboardHome() {
       title: 'Generate AI Content',
       description: 'Create notes, flashcards, quizzes, and slides with AI',
       completed: hasOutputs,
-      link: hasProjects ? `/dashboard/canvas?project=${projects[0]?.id}` : '/dashboard/projects',
+      link: hasProjects ? `/dashboard/project/${projects[0]?.id}` : '/dashboard/projects',
       icon: Network,
     },
   ];
