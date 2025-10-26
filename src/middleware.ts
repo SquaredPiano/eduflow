@@ -1,6 +1,7 @@
-import type { NextRequest } from "next/server";
+﻿import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth0 } from "./lib/auth0";
+import { syncUserToDatabase } from "./lib/userSync";
 
 export async function middleware(request: NextRequest) {
   // Let Auth0 handle its own routes first
@@ -10,7 +11,15 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
   // Define protected routes that require authentication
-  const protectedRoutes = ['/dashboard', '/api/generate', '/api/transcribe', '/api/export', '/api/ingest', '/api/canvas-sync'];
+  const protectedRoutes = [
+    '/dashboard',
+    '/example-uploader',
+    '/api/generate',
+    '/api/transcribe',
+    '/api/export',
+    '/api/ingest',
+    '/api/canvas-sync'
+  ];
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
   
   // Skip protection for auth routes and uploadthing
@@ -18,7 +27,7 @@ export async function middleware(request: NextRequest) {
     return response;
   }
   
-  // For protected routes, check if user is authenticated
+  // For protected routes, check if user is authenticated and sync to database
   if (isProtectedRoute) {
     try {
       // Pass the request to getSession (middleware signature)
@@ -30,6 +39,11 @@ export async function middleware(request: NextRequest) {
         url.pathname = '/auth/login';
         return NextResponse.redirect(url);
       }
+      
+      // Sync authenticated user to database (creates if doesn't exist)
+      // This ensures every authenticated user has a database record
+      await syncUserToDatabase(session);
+      
     } catch (error) {
       console.error('Auth check error:', error);
       // On error, redirect to login page
