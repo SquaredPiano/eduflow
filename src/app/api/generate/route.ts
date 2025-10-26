@@ -13,6 +13,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GenerateService, AgentType } from "@/services/generate.service";
 import { GeminiAdapter } from "@/adapters/gemini.adapter";
+import { OpenRouterAdapter } from "@/adapters/openrouter.adapter";
+import { IModelClient } from "@/domain/interfaces/IModelClient";
 
 /**
  * POST /api/generate
@@ -45,17 +47,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get API key from environment
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    // Get API keys from environment and initialize model client
+    // Try Gemini first, fallback to OpenRouter
+    let modelClient: IModelClient;
+    
+    const geminiKey = process.env.GEMINI_API_KEY;
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    
+    if (geminiKey) {
+      try {
+        modelClient = new GeminiAdapter(geminiKey);
+        console.log("Using Gemini API");
+      } catch (error) {
+        console.warn("Gemini initialization failed, falling back to OpenRouter");
+        if (!openRouterKey) {
+          return NextResponse.json(
+            { error: "No valid AI API key configured (tried Gemini and OpenRouter)" },
+            { status: 500 }
+          );
+        }
+        modelClient = new OpenRouterAdapter(openRouterKey);
+        console.log("Using OpenRouter API");
+      }
+    } else if (openRouterKey) {
+      modelClient = new OpenRouterAdapter(openRouterKey);
+      console.log("Using OpenRouter API");
+    } else {
       return NextResponse.json(
-        { error: "Gemini API key not configured" },
+        { error: "No AI API key configured (GEMINI_API_KEY or OPENROUTER_API_KEY required)" },
         { status: 500 }
       );
     }
 
     // Initialize service
-    const modelClient = new GeminiAdapter(apiKey);
     const generateService = new GenerateService(modelClient);
 
     // Generate content
@@ -122,17 +146,35 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Get API key (needed for service initialization)
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    // Get API keys from environment and initialize model client
+    // Try Gemini first, fallback to OpenRouter
+    let modelClient: IModelClient;
+    
+    const geminiKey = process.env.GEMINI_API_KEY;
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    
+    if (geminiKey) {
+      try {
+        modelClient = new GeminiAdapter(geminiKey);
+      } catch (error) {
+        if (!openRouterKey) {
+          return NextResponse.json(
+            { error: "No valid AI API key configured" },
+            { status: 500 }
+          );
+        }
+        modelClient = new OpenRouterAdapter(openRouterKey);
+      }
+    } else if (openRouterKey) {
+      modelClient = new OpenRouterAdapter(openRouterKey);
+    } else {
       return NextResponse.json(
-        { error: "Gemini API key not configured" },
+        { error: "No AI API key configured" },
         { status: 500 }
       );
     }
 
     // Initialize service
-    const modelClient = new GeminiAdapter(apiKey);
     const generateService = new GenerateService(modelClient);
 
     if (outputId) {
