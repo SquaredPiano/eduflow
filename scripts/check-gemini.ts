@@ -28,13 +28,14 @@ async function listModels() {
   console.log(`API Key: ${apiKey?.substring(0, 20)}...`);
   
   const modelsToTest = [
-    "gemini-pro",
-    "gemini-1.5-pro",
-    "gemini-1.5-flash",
-    "gemini-1.0-pro",
-    "models/gemini-pro",
-    "models/gemini-1.5-pro",
-    "models/gemini-1.5-flash",
+    "gemini-2.5-flash-image",
+    "gemini-2.5-pro",
+    "gemini-flash-latest",
+    "imagen-4.0-ultra-generate-001",
+    "gemini-flash-lite-latest",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "imagen-4.0-generate-001",
   ];
   
   let workingModel = null;
