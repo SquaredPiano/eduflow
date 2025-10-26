@@ -13,8 +13,10 @@ const uploadthingAdapter = new UploadThingAdapter();
  */
 export async function DELETE(
   req: Request,
-  { params }: { params: { fileId: string } }
+  context: { params: Promise<{ fileId: string }> }
 ) {
+  const { fileId } = await context.params;
+  
   try {
     // 1. Verify authentication
     const session = await getSession();
@@ -41,7 +43,7 @@ export async function DELETE(
 
     // 3. Get file and verify ownership
     const file = await prisma.file.findUnique({
-      where: { id: params.fileId },
+      where: { id: fileId },
       select: {
         id: true,
         key: true,
