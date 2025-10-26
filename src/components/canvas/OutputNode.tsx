@@ -1,7 +1,8 @@
 'use client';
 
 import { memo } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
+import type { NodeProps } from '@xyflow/react';
 import { FileCheck, Download } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ interface OutputNodeData {
   content: any;
 }
 
-function OutputNode({ data }: NodeProps<{ data: OutputNodeData }>) {
+function OutputNode({ data }: NodeProps) {
   const nodeData = data as OutputNodeData;
   
   return (
@@ -21,7 +22,7 @@ function OutputNode({ data }: NodeProps<{ data: OutputNodeData }>) {
       <Handle
         type="target"
         position={Position.Left}
-        className="bg-purple-500! w-3! h-3!"
+        className="!bg-purple-500 !w-3 !h-3"
       />
       <Card className="min-w-[200px] border-2 border-purple-500/50 bg-purple-500/5 hover:shadow-lg transition-shadow">
         <div className="p-3 space-y-2">

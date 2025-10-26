@@ -27,6 +27,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ImportCanvasWizard } from '@/components/canvas/ImportCanvasWizard';
+import { FileUploadZone } from '@/components/upload/FileUploadZone';
+import { NotesViewer } from '@/components/viewers/NotesViewer';
+import { FlashcardsViewer } from '@/components/viewers/FlashcardsViewer';
+import { QuizViewer } from '@/components/viewers/QuizViewer';
+import { SlidesViewer } from '@/components/viewers/SlidesViewer';
 
 interface File {
   id: string;
@@ -63,6 +68,7 @@ export default function ProjectDetailPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('files');
   const [showImportWizard, setShowImportWizard] = useState(false);
+  const [viewingOutput, setViewingOutput] = useState<Output | null>(null);
 
   // Fetch project data
   const { data: project, isLoading, error } = useQuery<ProjectData>({
@@ -195,38 +201,22 @@ export default function ProjectDetailPage() {
 
         {/* Files Tab */}
         <TabsContent value="files" className="space-y-6">
-          {/* Upload Section */}
-          <Card className="border-2 border-dashed border-primary/30 bg-primary/5">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-3">
-                <div className="flex justify-center">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Upload className="h-8 w-8 text-primary" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Upload Files</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Drag and drop files here or click to browse
-                  </p>
-                </div>
-                <div className="flex gap-2 justify-center">
-                  <Button className="bg-primary hover:bg-primary/90 text-white">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Choose Files
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="border-secondary/30 hover:bg-secondary/10"
-                    onClick={() => setShowImportWizard(true)}
-                  >
-                    <CloudDownload className="mr-2 h-4 w-4" />
-                    Import from Canvas
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Upload Section - FileUploadZone */}
+          <FileUploadZone
+            projectId={projectId}
+            onUploadComplete={() => {
+              queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+            }}
+          />
+          
+          <Button 
+            variant="outline" 
+            className="w-full border-secondary/30 hover:bg-secondary/10"
+            onClick={() => setShowImportWizard(true)}
+          >
+            <CloudDownload className="mr-2 h-4 w-4" />
+            Import from Canvas LMS
+          </Button>
 
           {/* Files List */}
           {project.files.length === 0 ? (
@@ -333,49 +323,94 @@ export default function ProjectDetailPage() {
 
         {/* AI Outputs Tab */}
         <TabsContent value="outputs" className="space-y-4">
-          {project.outputs.length === 0 ? (
-            <Card className="p-12 text-center">
-              <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="font-semibold mb-2">No AI outputs yet</h3>
-              <p className="text-muted-foreground text-sm">
-                Generate AI content from your files to see outputs here
-              </p>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {project.outputs.map((output) => (
-                <Card key={output.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      {getOutputIcon(output.type)}
-                      <span className="capitalize">{output.type}</span>
-                      {output.file && (
-                        <span className="text-sm text-muted-foreground font-normal">
-                          from {output.file.name}
-                        </span>
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Generated {new Date(output.createdAt).toLocaleString()}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Download className="mr-2 h-3 w-3" />
-                        Export
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Refine with AI
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+          {viewingOutput ? (
+            <div className="space-y-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setViewingOutput(null)}
+                className="mb-2"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to all outputs
+              </Button>
+              
+              {/* Render the appropriate viewer based on output type */}
+              {viewingOutput.type === 'notes' && (
+                <NotesViewer 
+                  content={viewingOutput.content.content || viewingOutput.content}
+                  title={viewingOutput.content.title}
+                />
+              )}
+              {viewingOutput.type === 'flashcards' && (
+                <FlashcardsViewer 
+                  flashcards={viewingOutput.content.flashcards || viewingOutput.content}
+                  title={viewingOutput.content.title}
+                />
+              )}
+              {viewingOutput.type === 'quiz' && (
+                <QuizViewer 
+                  questions={viewingOutput.content.questions || viewingOutput.content}
+                  title={viewingOutput.content.title}
+                />
+              )}
+              {viewingOutput.type === 'slides' && (
+                <SlidesViewer 
+                  slides={viewingOutput.content.slides || viewingOutput.content}
+                  title={viewingOutput.content.title}
+                />
+              )}
             </div>
+          ) : (
+            <>
+              {project.outputs.length === 0 ? (
+                <Card className="p-12 text-center">
+                  <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="font-semibold mb-2">No AI outputs yet</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Generate AI content from your files to see outputs here
+                  </p>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {project.outputs.map((output) => (
+                    <Card key={output.id} className="hover:shadow-md transition-shadow">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          {getOutputIcon(output.type)}
+                          <span className="capitalize">{output.type}</span>
+                          {output.file && (
+                            <span className="text-sm text-muted-foreground font-normal">
+                              from {output.file.name}
+                            </span>
+                          )}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Generated {new Date(output.createdAt).toLocaleString()}
+                        </p>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={() => setViewingOutput(output)}
+                          >
+                            View
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Download className="mr-2 h-3 w-3" />
+                            Export
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            Refine with AI
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 

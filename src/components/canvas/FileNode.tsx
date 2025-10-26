@@ -1,7 +1,8 @@
 'use client';
 
 import { memo } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
+import type { NodeProps } from '@xyflow/react';
 import { FileText, Video, FileType } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
@@ -12,7 +13,7 @@ interface FileNodeData {
   mimeType?: string;
 }
 
-function FileNode({ data }: NodeProps<{ data: FileNodeData }>) {
+function FileNode({ data }: NodeProps) {
   const nodeData = data as FileNodeData;
   
   const getFileIcon = () => {
@@ -34,7 +35,7 @@ function FileNode({ data }: NodeProps<{ data: FileNodeData }>) {
       <Handle
         type="source"
         position={Position.Right}
-        className="bg-primary! w-3! h-3!"
+        className="!bg-primary !w-3 !h-3"
       />
     </Card>
   );

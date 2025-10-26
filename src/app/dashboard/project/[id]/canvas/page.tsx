@@ -25,9 +25,9 @@ import { ArrowLeft, Save, Download, Upload, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Custom node components
-import FileNode from '@/components/canvas/FileNode';
-import AgentNode from '@/components/canvas/AgentNode';
-import OutputNode from '@/components/canvas/OutputNode';
+import { FileNode } from '@/components/canvas/FileNode';
+import { AgentNode } from '@/components/canvas/AgentNode';
+import { OutputNode } from '@/components/canvas/OutputNode';
 
 const nodeTypes = {
   fileNode: FileNode,
@@ -58,8 +58,8 @@ export default function CanvasPage() {
   const projectId = params?.id as string;
   const queryClient = useQueryClient();
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   // Fetch project data
