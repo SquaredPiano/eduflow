@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/apiClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +24,8 @@ import {
   FileQuestion,
   Presentation,
   ExternalLink,
-  CloudDownload
+  CloudDownload,
+  MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ImportCanvasWizard } from '@/components/canvas/ImportCanvasWizard';
@@ -32,6 +34,7 @@ import { NotesViewer } from '@/components/viewers/NotesViewer';
 import { FlashcardsViewer } from '@/components/viewers/FlashcardsViewer';
 import { QuizViewer } from '@/components/viewers/QuizViewer';
 import { SlidesViewer } from '@/components/viewers/SlidesViewer';
+import { AgentChatPanel, ChatFloatingButton } from '@/components/chat/AgentChatPanel';
 
 interface File {
   id: string;
@@ -69,6 +72,12 @@ export default function ProjectDetailPage() {
   const [activeTab, setActiveTab] = useState('files');
   const [showImportWizard, setShowImportWizard] = useState(false);
   const [viewingOutput, setViewingOutput] = useState<Output | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatContext, setChatContext] = useState<{
+    outputType?: string;
+    outputContent?: any;
+    outputTitle?: string;
+  }>({});
 
   // Fetch project data
   const { data: project, isLoading, error } = useQuery<ProjectData>({
@@ -95,12 +104,30 @@ export default function ProjectDetailPage() {
       api.post('/api/generate', data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      toast.success(`Generating ${variables.type}...`);
+      toast.success(`Generating ${variables.type}...`, {
+        description: 'This may take a few moments',
+      });
+      // Switch to outputs tab after generation starts
+      setTimeout(() => setActiveTab('outputs'), 1000);
     },
     onError: () => {
       toast.error('Failed to start generation');
     },
   });
+
+  const openChatWithOutput = (output: Output) => {
+    setChatContext({
+      outputType: output.type,
+      outputContent: output.content,
+      outputTitle: `${output.type} from ${output.file?.name || 'file'}`,
+    });
+    setIsChatOpen(true);
+  };
+
+  const openGeneralChat = () => {
+    setChatContext({});
+    setIsChatOpen(true);
+  };
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -166,21 +193,37 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
+    <>
+      {/* Main Content with Animation */}
+      <motion.div
+        animate={{
+          marginRight: isChatOpen ? '480px' : '0px',
+        }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="container mx-auto p-6 space-y-6"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard/projects">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-foreground">{project.name}</h1>
+            {project.description && (
+              <p className="text-muted-foreground mt-1">{project.description}</p>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            onClick={openGeneralChat}
+            className="gap-2"
+          >
+            <MessageSquare className="h-4 w-4" />
+            AI Assistant
           </Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-foreground">{project.name}</h1>
-          {project.description && (
-            <p className="text-muted-foreground mt-1">{project.description}</p>
-          )}
         </div>
-      </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -397,12 +440,17 @@ export default function ProjectDetailPage() {
                           >
                             View
                           </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => openChatWithOutput(output)}
+                          >
+                            <MessageSquare className="mr-2 h-3 w-3" />
+                            Refine with AI
+                          </Button>
                           <Button variant="outline" size="sm">
                             <Download className="mr-2 h-3 w-3" />
                             Export
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            Refine with AI
                           </Button>
                         </div>
                       </CardContent>
@@ -448,6 +496,19 @@ export default function ProjectDetailPage() {
         onOpenChange={setShowImportWizard}
         projectId={projectId}
       />
-    </div>
+    </motion.div>
+
+    {/* AI Chat Panel */}
+    <AgentChatPanel
+      isOpen={isChatOpen}
+      onClose={() => setIsChatOpen(false)}
+      outputType={chatContext.outputType}
+      outputContent={chatContext.outputContent}
+      outputTitle={chatContext.outputTitle}
+    />
+
+    {/* Floating Chat Button (when chat is closed) */}
+    {!isChatOpen && <ChatFloatingButton onClick={openGeneralChat} />}
+  </>
   );
 }
