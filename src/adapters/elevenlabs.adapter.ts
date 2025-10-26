@@ -28,7 +28,7 @@ export class ElevenLabsAdapter implements ITranscriber {
       // Transcribe using ElevenLabs Speech-to-Text
       const result = await this.client.speechToText.convert({
         file: audioFile,
-        modelId: "scribe-v1", // ElevenLabs transcription model
+        modelId: "scribe_v1", // Fixed: underscore not hyphen
       });
 
       // Extract text from result
@@ -64,7 +64,7 @@ export class ElevenLabsAdapter implements ITranscriber {
       // Transcribe using ElevenLabs Speech-to-Text
       const result = await this.client.speechToText.convert({
         file: audioFile,
-        modelId: "scribe-v1",
+        modelId: "scribe_v1",
       });
 
       // Extract text from result
