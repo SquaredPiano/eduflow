@@ -30,7 +30,7 @@ Welcome to the EduFlow AI documentation! This directory contains all planning, i
 - **[IMPLEMENTATION_STRATEGY.md](IMPLEMENTATION_STRATEGY.md)** - High-level overview
   - Executive summary
   - Architecture overview
-  - YouPac AI adaptations
+  - Platform features
   - Success metrics
   - Next steps
 
