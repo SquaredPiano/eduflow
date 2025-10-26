@@ -1,11 +1,12 @@
-import { SignOutButton } from "@clerk/react-router";
+'use client';
+
 import {
   IconDotsVertical,
   IconLogout,
   IconUserCircle,
 } from "@tabler/icons-react";
 import { SettingsIcon } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,24 +15,32 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "~/components/ui/sidebar";
-import { useClerk } from "@clerk/react-router";
+} from "@/components/ui/sidebar";
+import { useAuth } from '@/providers/Auth0Provider';
 
-export function NavUser({ user }: any) {
+export function NavUser() {
   const { isMobile } = useSidebar();
-  const userFullName = user.firstName + " " + user.lastName;
-  const userEmail = user.emailAddresses[0].emailAddress;
-  const userInitials =
-    (user?.firstName?.charAt(0) || "").toUpperCase() +
-    (user?.lastName?.charAt(0) || "").toUpperCase();
-  const userProfile = user.imageUrl;
-  const { signOut } = useClerk();
+  const { user, logout } = useAuth();
+
+  if (!user) {
+    return null;
+  }
+
+  const userFullName = user.name || 'User';
+  const userEmail = user.email;
+  const userInitials = userFullName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+  const userProfile = user.picture;
 
   return (
     <SidebarMenu>
@@ -91,7 +100,7 @@ export function NavUser({ user }: any) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut({ redirectUrl: "/" })}>
+            <DropdownMenuItem onClick={logout}>
               <IconLogout />
               Sign Out
             </DropdownMenuItem>

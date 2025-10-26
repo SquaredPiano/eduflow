@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAccessToken } from '@auth0/nextjs-auth0';
 import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
+
+async function getSessionUser() {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('appSession');
+  
+  if (!sessionCookie) {
+    return null;
+  }
+  
+  try {
+    const session = JSON.parse(sessionCookie.value);
+    return session.user;
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
-    // Auth0 Next.js SDK automatically handles authentication
-    // We'll validate the session exists via middleware or here
-    const { searchParams } = new URL(request.url);
+    const user = await getSessionUser();
     
-    // For now, skip auth check - implement proper Auth0 middleware later
-    // In production, use Auth0's withApiAuthRequired or custom middleware
-    const userId = searchParams.get('userId'); // Temp workaround
-    
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -21,12 +31,12 @@ export async function GET(request: NextRequest) {
 
     const projects = await prisma.project.findMany({
       where: {
-        userId: session.user.sub,
+        userId: user.sub,
         ...(includeArchived ? {} : { archived: false }),
       },
       include: {
         _count: {
-          select: { files: true },
+          select: { files: true, outputs: true },
         },
       },
       orderBy: { updatedAt: 'desc' },
@@ -44,9 +54,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const res = new NextResponse();
-    const session = await getSession(request, res);
-    if (!session?.user) {
+    const user = await getSessionUser();
+    
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -61,7 +71,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: name.trim(),
         description: description?.trim() || null,
-        userId: session.user.sub,
+        userId: user.sub,
       },
     });
 
