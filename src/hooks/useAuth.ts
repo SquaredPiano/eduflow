@@ -1,5 +1,6 @@
 'use client'
 
+<<<<<<< HEAD
 import { useUser } from '@auth0/nextjs-auth0/client'
 
 export type AuthStatus = 'authenticated' | 'unauthenticated' | 'loading'
@@ -41,6 +42,18 @@ export function useAuth() {
     error,
     isLoading 
   }
+=======
+export type AuthStatus = 'authenticated' | 'unauthenticated' | 'loading'
+export interface AuthUser { id: string; name?: string | null; email?: string | null }
+
+export function useAuth() {
+  // TODO: Wire to Auth0
+  const user: AuthUser | null = null
+  const status: AuthStatus = 'unauthenticated'
+  // Avoid constant comparison in stub; wire real auth state later
+  const isAuthenticated = false
+  return { user, status, isAuthenticated }
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 }
 
 export default useAuth

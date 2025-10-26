@@ -18,7 +18,10 @@ model User {
   id          String   @id @default(cuid())
   email       String   @unique
   auth0Id     String   @unique
+<<<<<<< HEAD
   name        String?
+=======
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
   canvasToken String?  // Encrypted Canvas API token
   courses     Course[]
   files       File[]

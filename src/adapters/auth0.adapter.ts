@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { PrismaClient } from '@prisma/client'
 import { auth0 } from '@/lib/auth0'
 
@@ -129,4 +130,8 @@ export class Auth0Adapter {
   async disconnect() {
     await this.prisma.$disconnect()
   }
+=======
+export class Auth0Adapter {
+  // Placeholder for Auth0 integration
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 }

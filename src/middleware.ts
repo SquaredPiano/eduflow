@@ -1,7 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth0 } from "./lib/auth0";
+<<<<<<< HEAD
 import { syncUserToDatabase } from "./lib/userSync";
+=======
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 
 export async function middleware(request: NextRequest) {
   // Let Auth0 handle its own routes first
@@ -11,6 +14,7 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
   // Define protected routes that require authentication
+<<<<<<< HEAD
   const protectedRoutes = [
     '/dashboard',
     '/example-uploader',
@@ -20,6 +24,9 @@ export async function middleware(request: NextRequest) {
     '/api/ingest',
     '/api/canvas-sync'
   ];
+=======
+  const protectedRoutes = ['/dashboard', '/api/generate', '/api/transcribe', '/api/export', '/api/ingest', '/api/canvas-sync'];
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
   
   // Skip protection for auth routes and uploadthing
@@ -27,7 +34,11 @@ export async function middleware(request: NextRequest) {
     return response;
   }
   
+<<<<<<< HEAD
   // For protected routes, check if user is authenticated and sync to database
+=======
+  // For protected routes, check if user is authenticated
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
   if (isProtectedRoute) {
     try {
       // Pass the request to getSession (middleware signature)
@@ -39,11 +50,14 @@ export async function middleware(request: NextRequest) {
         url.pathname = '/auth/login';
         return NextResponse.redirect(url);
       }
+<<<<<<< HEAD
       
       // Sync authenticated user to database (creates if doesn't exist)
       // This ensures every authenticated user has a database record
       await syncUserToDatabase(session);
       
+=======
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
     } catch (error) {
       console.error('Auth check error:', error);
       // On error, redirect to login page

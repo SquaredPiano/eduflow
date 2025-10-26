@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 'use client';
 
 import { UploadDemo } from "@/components/upload";
@@ -61,3 +62,10 @@ export default function ExampleUploaderPage() {
   );
 }
 
+=======
+import { UploadDemo } from "@/components/upload";
+
+export default function ExampleUploaderPage() {
+  return <UploadDemo />;
+}
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6

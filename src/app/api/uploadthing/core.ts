@@ -2,11 +2,15 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
+<<<<<<< HEAD
 import { TextExtractorAdapter } from "@/adapters/text-extractor.adapter";
+=======
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 
 const f = createUploadthing();
 const prisma = new PrismaClient();
 
+<<<<<<< HEAD
 /**
  * Check if a file type should have text extracted
  */
@@ -51,6 +55,8 @@ async function extractTextInBackground(
   }
 }
 
+=======
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
   // Define as many FileRoutes as you like, each with a unique routeSlug
@@ -67,6 +73,7 @@ export const ourFileRouter = {
       // This code runs on your server before upload
       const session = await getSession();
       
+<<<<<<< HEAD
       // Check if user is authenticated
       if (!session?.user) {
         throw new UploadThingError("Unauthorized - Please log in to upload files");
@@ -97,6 +104,31 @@ export const ourFileRouter = {
       return { 
         userId: dbUser.id,  // Use database user ID, not Auth0 ID
         userEmail: userEmail,
+=======
+      // TODO: Once Auth0 is properly implemented in src/lib/auth.ts,
+      // this will work correctly. For now, uncomment the lines below:
+      
+      // Check if user is authenticated
+      // if (!session?.user) {
+      //   throw new UploadThingError("Unauthorized - Please log in to upload files");
+      // }
+      
+      // TEMPORARY: Allow uploads without authentication for testing
+      // Remove this once Auth0 integration is complete
+      console.log("⚠️  TEMP: Allowing unauthenticated upload (Auth0 stub)");
+      
+      // Return user metadata for use in onUploadComplete
+      // When Auth0 is implemented, uncomment:
+      // return { 
+      //   userId: session.user.sub,
+      //   userEmail: session.user.email,
+      // };
+      
+      // Temporary fallback:
+      return { 
+        userId: "temp-user-id",
+        userEmail: "temp@example.com",
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
       };
     })
     .onUploadComplete(async ({ metadata, file }) => {
@@ -119,6 +151,7 @@ export const ourFileRouter = {
           },
         });
 
+<<<<<<< HEAD
         console.log("✅ File saved to database with ID:", savedFile.id);
 
         // Trigger async text extraction for supported file types
@@ -129,6 +162,9 @@ export const ourFileRouter = {
               console.error(`⚠️ Background text extraction failed for ${savedFile.id}:`, error);
             });
         }
+=======
+        console.log("File saved to database with ID:", savedFile.id);
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
 
         // Return data to client
         return { 
@@ -138,7 +174,11 @@ export const ourFileRouter = {
           fileKey: file.key,
         };
       } catch (error) {
+<<<<<<< HEAD
         console.error("❌ Failed to save file to database:", error);
+=======
+        console.error("Failed to save file to database:", error);
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
         // Don't throw here - file is already uploaded
         // Return what we can
         return {

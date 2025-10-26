@@ -155,7 +155,11 @@ or is not supported for generateContent.
 - ❌ `gemini-pro` - 404 Not Found
 
 **Root Cause Analysis**:
+<<<<<<< HEAD
 1. **API Key Invalid**: The key `AIzaSyCre-scQZuPkS7ndveHg698nE8aqrgu9As` may be:
+=======
+1. **API Key Invalid**: The key may be:
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
    - Expired
    - Not activated for Gemini API
    - Restricted to different models

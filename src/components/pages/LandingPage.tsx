@@ -18,7 +18,11 @@ export default function LandingPage() {
 
   if (isLoading) {
     return (
+<<<<<<< HEAD
       <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100">
+=======
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -30,7 +34,11 @@ export default function LandingPage() {
   }
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50">
+=======
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+>>>>>>> 84775036be9bab114f96f7afe5cf694334b47fb6
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
