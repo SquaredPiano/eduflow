@@ -92,7 +92,7 @@ export class GenerateService {
         outputRecord.id,
         outputRecord.type as AgentType,
         outputRecord.content,
-        outputRecord.transcriptId
+        outputRecord.transcriptId || undefined
       );
     } catch (error) {
       throw new Error(

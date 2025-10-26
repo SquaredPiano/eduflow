@@ -126,14 +126,6 @@ export default function CanvasPage() {
   useEffect(() => {
     if (!project) return;
 
-    // Map eduflow types to youpac-ai agent types
-    const typeMapping = {
-      'notes': 'title', // Title agent in youpac-ai
-      'flashcards': 'description', // Description agent
-      'quiz': 'thumbnail', // Thumbnail agent  
-      'slides': 'tweets', // Tweets agent
-    };
-
     const fileNodes: Node[] = project.files.map((file, index) => ({
       id: `file-${file.id}`,
       type: 'fileNode',
@@ -147,14 +139,14 @@ export default function CanvasPage() {
       },
     }));
 
-    // AI Agent nodes with enhanced configuration (adapted for eduflow)
+    // AI Agent nodes - EDUCATION TYPES ONLY (no youpac-ai types)
     const agentNodes: Node[] = [
       {
         id: 'agent-notes',
         type: 'agentNode',
         position: { x: 500, y: 100 },
         data: {
-          type: 'title', // Using youpac-ai type mapping
+          type: 'notes', // Direct education type
           label: 'Notes Generator',
           draft: project.outputs.find((o) => o.type === 'notes')?.content?.content || '',
           status: project.outputs.find((o) => o.type === 'notes')?.status || 'idle',
@@ -169,8 +161,8 @@ export default function CanvasPage() {
         type: 'agentNode',
         position: { x: 500, y: 320 },
         data: {
-          type: 'description',
-          label: 'Flashcards Generator',
+          type: 'flashcards', // Direct education type
+          label: 'Flashcards Creator',
           draft: project.outputs.find((o) => o.type === 'flashcards')?.content?.cards?.[0]?.front || '',
           status: project.outputs.find((o) => o.type === 'flashcards')?.status || 'idle',
           connections: fileNodes.map((n) => n.id),
@@ -184,7 +176,7 @@ export default function CanvasPage() {
         type: 'agentNode',
         position: { x: 500, y: 540 },
         data: {
-          type: 'thumbnail',
+          type: 'quiz', // Direct education type
           label: 'Quiz Generator',
           draft: project.outputs.find((o) => o.type === 'quiz')?.content?.questions?.[0]?.question || '',
           status: project.outputs.find((o) => o.type === 'quiz')?.status || 'idle',
@@ -199,8 +191,8 @@ export default function CanvasPage() {
         type: 'agentNode',
         position: { x: 500, y: 760 },
         data: {
-          type: 'tweets',
-          label: 'Slides Generator',
+          type: 'slides', // Direct education type
+          label: 'Slides Extractor',
           draft: project.outputs.find((o) => o.type === 'slides')?.content?.slides?.[0]?.title || '',
           status: project.outputs.find((o) => o.type === 'slides')?.status || 'idle',
           connections: fileNodes.map((n) => n.id),
@@ -314,7 +306,7 @@ export default function CanvasPage() {
         type: 'agentNode',
         position,
         data: {
-          type: agentType === 'notes' ? 'title' : agentType === 'flashcards' ? 'description' : agentType === 'quiz' ? 'thumbnail' : 'tweets',
+          type: agentType, // Use education type directly (notes, flashcards, quiz, slides)
           label: agentLabel,
           draft: '',
           status: 'idle',

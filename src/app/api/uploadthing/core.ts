@@ -1,10 +1,9 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 const f = createUploadthing();
-const prisma = new PrismaClient();
 
 /**
  * Check if a file type should have text extracted
@@ -68,29 +67,33 @@ export const ourFileRouter = {
       // This code runs on your server before upload
       const session = await getSession();
       
-      // TODO: Once Auth0 is properly implemented in src/lib/auth.ts,
-      // this will work correctly. For now, uncomment the lines below:
-      
       // Check if user is authenticated
-      // if (!session?.user) {
-      //   throw new UploadThingError("Unauthorized - Please log in to upload files");
-      // }
+      if (!session?.user) {
+        throw new UploadThingError("Unauthorized - Please log in to upload files");
+      }
       
-      // TEMPORARY: Allow uploads without authentication for testing
-      // Remove this once Auth0 integration is complete
-      console.log("⚠️  TEMP: Allowing unauthenticated upload (Auth0 stub)");
+      console.log("✅ Authenticated upload for user:", session.user.email);
+      
+      // Get database user to ensure they exist
+      const cookieStore = await import('next/headers').then(m => m.cookies());
+      const sessionCookie = (await cookieStore).get('appSession');
+      if (!sessionCookie) {
+        throw new UploadThingError("Session expired - Please log in again");
+      }
+      
+      const sessionData = JSON.parse(sessionCookie.value);
+      const dbUser = await prisma.user.findUnique({
+        where: { auth0Id: sessionData.user.sub },
+      });
+      
+      if (!dbUser) {
+        throw new UploadThingError("User not found in database");
+      }
       
       // Return user metadata for use in onUploadComplete
-      // When Auth0 is implemented, uncomment:
-      // return { 
-      //   userId: session.user.sub,
-      //   userEmail: session.user.email,
-      // };
-      
-      // Temporary fallback:
       return { 
-        userId: "temp-user-id",
-        userEmail: "temp@example.com",
+        userId: dbUser.id,
+        userEmail: dbUser.email || '',
       };
     })
     .onUploadComplete(async ({ metadata, file }) => {

@@ -2,7 +2,6 @@
 
 import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import type { NodeProps } from '@xyflow/react';
 import { FileText, Video, FileType } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
@@ -13,13 +12,16 @@ interface FileNodeData {
   mimeType?: string;
 }
 
-function FileNode({ data }: NodeProps) {
-  const nodeData = data as FileNodeData;
+interface FileNodeProps {
+  data: FileNodeData;
+}
+
+function FileNode({ data }: FileNodeProps) {
   
   const getFileIcon = () => {
-    if (!nodeData.mimeType) return <FileText className="h-5 w-5" />;
-    if (nodeData.mimeType.startsWith('video/')) return <Video className="h-5 w-5" />;
-    if (nodeData.mimeType.includes('pdf')) return <FileType className="h-5 w-5" />;
+    if (!data.mimeType) return <FileText className="h-5 w-5" />;
+    if (data.mimeType.startsWith('video/')) return <Video className="h-5 w-5" />;
+    if (data.mimeType.includes('pdf')) return <FileType className="h-5 w-5" />;
     return <FileText className="h-5 w-5" />;
   };
 
@@ -28,7 +30,7 @@ function FileNode({ data }: NodeProps) {
       <div className="p-3 space-y-2">
         <div className="flex items-center gap-2 text-primary">
           {getFileIcon()}
-          <div className="font-semibold text-sm truncate">{nodeData.label}</div>
+          <div className="font-semibold text-sm truncate">{data.label}</div>
         </div>
         <div className="text-xs text-muted-foreground">Source File</div>
       </div>

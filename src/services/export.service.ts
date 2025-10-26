@@ -61,7 +61,7 @@ export class ExportService {
       outputRecord.id,
       outputRecord.type as OutputKind,
       outputRecord.content,
-      outputRecord.transcriptId
+      outputRecord.transcriptId || undefined
     )
 
     // Get the appropriate exporter

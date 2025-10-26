@@ -99,14 +99,14 @@ export default function ProjectsPage() {
     <div className="min-h-screen bg-[#fafafa]">
       <div className="mx-auto max-w-7xl px-6 py-12">
         {/* Header - Clean and spacious */}
-        <div className="mb-12 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-1">
+        <div className="mb-12 flex flex-col gap-6">
+          <div className="space-y-1 text-center">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900">Projects</h1>
             <p className="text-base text-gray-600">
               Organize your coursework and learning materials
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 justify-center">
             <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="lg" className="border-gray-300">
@@ -151,7 +151,7 @@ export default function ProjectsPage() {
 
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                <Button size="lg" className="bg-[#0b8e16] hover:bg-[#097a12] text-white shadow-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   New Project
                 </Button>
@@ -253,7 +253,7 @@ export default function ProjectsPage() {
                 </Button>
                 <Button 
                   onClick={() => setIsCreateOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-[#0b8e16] hover:bg-[#097a12]"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Create Project
@@ -288,7 +288,7 @@ export default function ProjectsPage() {
                   {/* Project content */}
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1 pr-8 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1 pr-8 line-clamp-1 group-hover:text-[#0b8e16] transition-colors">
                         {project.name}
                       </h3>
                       {project.description && (
