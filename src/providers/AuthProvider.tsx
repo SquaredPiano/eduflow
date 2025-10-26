@@ -1,10 +1,10 @@
 // src/providers/AuthProvider.tsx
 'use client'
 import type { ReactNode } from 'react'
-import { UserProvider } from '@auth0/nextjs-auth0/client'
+import { Auth0Provider } from '@auth0/nextjs-auth0/client'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  return <UserProvider>{children}</UserProvider>
+  return <Auth0Provider>{children}</Auth0Provider>
 }
 
 export default AuthProvider
