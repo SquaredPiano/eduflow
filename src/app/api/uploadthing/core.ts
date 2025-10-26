@@ -2,7 +2,6 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
-import { TextExtractorAdapter } from "@/adapters/text-extractor.adapter";
 
 const f = createUploadthing();
 const prisma = new PrismaClient();
@@ -30,6 +29,8 @@ async function extractTextInBackground(
   try {
     console.log(`🔍 Starting background text extraction for file ${fileId}`);
     
+    // Lazy import to avoid build-time issues with PDF libraries
+    const { TextExtractorAdapter } = await import('@/adapters/text-extractor.adapter');
     const textExtractor = new TextExtractorAdapter();
     const extractedText = await textExtractor.extractText(fileUrl, mimeType);
     

@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { IngestService } from '@/services/ingest.service';
 import { PrismaClient } from '@prisma/client';
-import { TextExtractorAdapter } from '@/adapters/text-extractor.adapter';
+
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/ingest
@@ -16,6 +18,8 @@ import { TextExtractorAdapter } from '@/adapters/text-extractor.adapter';
  *   fileUrl: string;      // Public URL of the uploaded file
  *   fileName: string;     // Original filename
  *   fileType: string;     // MIME type (e.g., 'application/pdf')
+ *   fileKey: string;      // UploadThing file key
+ *   fileSize: number;     // File size in bytes
  *   courseId?: string;    // Optional course ID
  * }
  * 
@@ -65,7 +69,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { fileUrl, fileName, fileType, courseId } = body;
+    const { fileUrl, fileName, fileType, fileKey, fileSize, courseId } = body;
 
     // STEP 3: Validate required inputs
     if (!fileUrl || typeof fileUrl !== 'string') {
@@ -89,6 +93,20 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!fileKey || typeof fileKey !== 'string') {
+      return NextResponse.json(
+        { error: 'Missing or invalid required field: fileKey' },
+        { status: 400 }
+      );
+    }
+
+    if (!fileSize || typeof fileSize !== 'number') {
+      return NextResponse.json(
+        { error: 'Missing or invalid required field: fileSize' },
+        { status: 400 }
+      );
+    }
+
     // Validate courseId if provided
     if (courseId !== undefined && typeof courseId !== 'string') {
       return NextResponse.json(
@@ -99,8 +117,9 @@ export async function POST(req: Request) {
 
     console.log(`[Ingest API] Processing file: ${fileName} (${fileType})`);
 
-    // STEP 4: Initialize dependencies
+    // STEP 4: Initialize dependencies (lazy import to avoid build-time issues)
     prisma = new PrismaClient();
+    const { TextExtractorAdapter } = await import('@/adapters/text-extractor.adapter');
     const textExtractor = new TextExtractorAdapter();
     const ingestService = new IngestService(prisma, textExtractor);
 
@@ -109,6 +128,8 @@ export async function POST(req: Request) {
       fileUrl,
       fileName,
       fileType,
+      fileKey,
+      fileSize,
       userId,
       courseId
     );

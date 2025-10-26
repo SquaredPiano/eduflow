@@ -11,17 +11,17 @@
 import { ITextExtractor } from '@/domain/interfaces/ITextExtractor';
 import { PDFAdapter } from './pdf.adapter';
 import { DOCXAdapter } from './docx.adapter';
-import { PPTXAdapterSimple } from './pptx.adapters';
+import { PPTXAdapter } from './pptx.adapters';
 
 export class TextExtractorAdapter implements ITextExtractor {
   private pdfAdapter: PDFAdapter;
   private docxAdapter: DOCXAdapter;
-  private pptxAdapter: PPTXAdapterSimple;
+  private pptxAdapter: PPTXAdapter;
 
   constructor() {
     this.pdfAdapter = new PDFAdapter();
     this.docxAdapter = new DOCXAdapter();
-    this.pptxAdapter = new PPTXAdapterSimple();
+    this.pptxAdapter = new PPTXAdapter();
   }
 
   /**
