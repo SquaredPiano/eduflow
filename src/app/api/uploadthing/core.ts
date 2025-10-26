@@ -110,51 +110,94 @@ export const ourFileRouter = {
     // Set permissions and file types for this FileRoute
     .middleware(async ({ req, input }) => {
       // This code runs on your server before upload
-      const session = await getSession();
-      
-      // Check if user is authenticated
-      if (!session?.user) {
-        throw new UploadThingError("Unauthorized - Please log in to upload files");
-      }
-      
-      console.log("✅ Authenticated upload for user:", session.user.email);
-      
-      // Get database user to ensure they exist
-      const cookieStore = await import('next/headers').then(m => m.cookies());
-      const sessionCookie = (await cookieStore).get('appSession');
-      if (!sessionCookie) {
-        throw new UploadThingError("Session expired - Please log in again");
-      }
-      
-      const sessionData = JSON.parse(sessionCookie.value);
-      const dbUser = await prisma.user.findUnique({
-        where: { auth0Id: sessionData.user.sub },
-      });
-      
-      if (!dbUser) {
-        throw new UploadThingError("User not found in database");
-      }
-      
-      // Validate projectId if provided
-      if (input?.projectId) {
-        const project = await prisma.project.findFirst({
-          where: {
-            id: input.projectId,
-            userId: dbUser.id,
-          },
+      try {
+        console.log("🔍 Upload middleware starting...");
+        console.log("📦 Input:", input);
+        
+        const session = await getSession();
+        console.log("👤 Session:", session ? "Found" : "Not found");
+        
+        // Check if user is authenticated
+        if (!session?.user) {
+          console.error("❌ No session or user found");
+          throw new UploadThingError("Unauthorized - Please log in to upload files");
+        }
+        
+        console.log("✅ Authenticated upload for user:", session.user.email);
+        
+        // Get database user by email (simpler approach)
+        const dbUser = await prisma.user.findUnique({
+          where: { email: session.user.email },
         });
         
-        if (!project) {
-          throw new UploadThingError("Project not found or access denied");
+        console.log("🔍 Database user lookup:", dbUser ? "Found" : "Creating new user");
+        
+        if (!dbUser) {
+          // Create user if doesn't exist
+          const newUser = await prisma.user.create({
+            data: {
+              email: session.user.email,
+              name: session.user.name || '',
+              auth0Id: session.user.sub,
+            },
+          });
+          console.log("✅ Created new user:", newUser.id);
+          
+          // Validate projectId if provided
+          if (input?.projectId) {
+            const project = await prisma.project.findFirst({
+              where: {
+                id: input.projectId,
+                userId: newUser.id,
+              },
+            });
+            
+            if (!project) {
+              console.error("❌ Project not found:", input.projectId);
+              throw new UploadThingError("Project not found or access denied");
+            }
+            console.log("✅ Project validated:", project.id);
+          }
+          
+          return { 
+            userId: newUser.id,
+            userEmail: newUser.email,
+            projectId: input?.projectId,
+          };
         }
+        
+        // Validate projectId if provided
+        if (input?.projectId) {
+          const project = await prisma.project.findFirst({
+            where: {
+              id: input.projectId,
+              userId: dbUser.id,
+            },
+          });
+          
+          if (!project) {
+            console.error("❌ Project not found:", input.projectId);
+            throw new UploadThingError("Project not found or access denied");
+          }
+          console.log("✅ Project validated:", project.id);
+        }
+        
+        console.log("✅ Middleware complete, returning metadata");
+        
+        // Return user metadata for use in onUploadComplete
+        return { 
+          userId: dbUser.id,
+          userEmail: dbUser.email,
+          projectId: input?.projectId,
+        };
+      } catch (error) {
+        console.error("❌ Upload middleware error:", error);
+        if (error instanceof Error) {
+          console.error("Error message:", error.message);
+          console.error("Error stack:", error.stack);
+        }
+        throw new UploadThingError(error instanceof Error ? error.message : "Authentication failed");
       }
-      
-      // Return user metadata for use in onUploadComplete
-      return { 
-        userId: dbUser.id,
-        userEmail: dbUser.email || '',
-        projectId: input?.projectId,
-      };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload

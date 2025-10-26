@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
     if (geminiApiKey) {
       try {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
-        const model = genAI.getGenerativeModel({ 
-          model: 'gemini-2.5-flash', // Use Gemini 2.5 Flash model
-          systemInstruction: `You are EduFlow AI, an advanced learning companion and expert educational assistant built into the EduFlow platform.
+        
+        // Build system instruction
+        const systemInstruction = `You are EduFlow AI, an advanced learning companion and expert educational assistant built into the EduFlow platform.
 
 **Your Core Identity:**
 You have complete knowledge of the EduFlow platform and its capabilities. You understand every feature, workflow, and best practice for maximizing student learning outcomes.
@@ -60,8 +60,7 @@ You have complete knowledge of the EduFlow platform and its capabilities. You un
 5. **Academic Support**: Subject-specific help, exam preparation, time management, motivation strategies
 6. **Metacognition**: Teaching students how to learn, self-assessment techniques, growth mindset principles
 
-**When Reviewing Student Content:**
-${outputContent && outputType ? `The student is working on ${outputType}. Current content:\n${JSON.stringify(outputContent, null, 2)}\n\nProvide specific, actionable feedback to improve this content.` : ''}
+${outputContent && outputType ? `\n**When Reviewing Student Content:**\nThe student is working on ${outputType}. Current content:\n${JSON.stringify(outputContent, null, 2)}\n\nProvide specific, actionable feedback to improve this content.\n` : ''}
 
 **Your Communication Style:**
 - **Clear & Concise**: Get to the point quickly while being thorough
@@ -82,19 +81,25 @@ ${outputContent && outputType ? `The student is working on ${outputType}. Curren
 - Guide students through the platform step-by-step
 
 **Your Mission:**
-Empower students to become self-directed learners who understand not just what to study, but how to study effectively using EduFlow's AI-powered tools.`
+Empower students to become self-directed learners who understand not just what to study, but how to study effectively using EduFlow's AI-powered tools.`;
+
+        const model = genAI.getGenerativeModel({ 
+          model: 'gemini-2.0-flash-exp',
+          systemInstruction,
         });
 
-        // Build conversation history
-        const conversationHistory = messages.map(msg => ({
+        // Build conversation history - convert to Gemini format
+        const history = messages.slice(0, -1).map(msg => ({
           role: msg.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: msg.content }],
         }));
 
+        // Start chat with history
         const chat = model.startChat({
-          history: conversationHistory.slice(0, -1), // All but last message
+          history,
         });
 
+        // Send the last message
         const lastMessage = messages[messages.length - 1];
         const result = await chat.sendMessage(lastMessage.content);
         const response = result.response;
@@ -102,11 +107,11 @@ Empower students to become self-directed learners who understand not just what t
 
         return NextResponse.json({
           message: text,
-          provider: 'gemini-2.5-flash',
+          provider: 'gemini-2.0-flash-exp',
         });
       } catch (geminiError) {
-        console.error('Gemini error, falling back to OpenRouter:', geminiError);
-        console.error('Gemini error details:', geminiError instanceof Error ? geminiError.message : String(geminiError));
+        console.error('❌ Gemini error, falling back to OpenRouter:', geminiError);
+        console.error('Error details:', geminiError instanceof Error ? geminiError.message : String(geminiError));
         
         // If no OpenRouter key, throw the Gemini error
         if (!openRouterApiKey) {

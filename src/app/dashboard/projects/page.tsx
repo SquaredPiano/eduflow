@@ -4,12 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, FileText, Loader2, Trash2, FolderOpen, Download } from 'lucide-react';
+import { Plus, FileText, Loader2, Trash2, FolderOpen, Download, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
 interface Project {
@@ -29,7 +30,14 @@ export default function ProjectsPage() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isFileSelectionOpen, setIsFileSelectionOpen] = useState(false);
   const [newProject, setNewProject] = useState({ name: '', description: '' });
+  const [canvasUrl, setCanvasUrl] = useState('');
+  const [canvasApiKey, setCanvasApiKey] = useState('');
+  const [availableCourses, setAvailableCourses] = useState<any[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [availableFiles, setAvailableFiles] = useState<any[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
 
   // Fetch projects
   const { data: projects = [], isLoading } = useQuery<Project[]>({
@@ -57,7 +65,7 @@ export default function ProjectsPage() {
       setIsCreateOpen(false);
       setNewProject({ name: '', description: '' });
       toast.success('Project created successfully!');
-      router.push(`/dashboard/canvas?project=${data.id}`);
+      router.push(`/dashboard/project/${data.id}`);
     },
     onError: () => {
       toast.error('Failed to create project');
@@ -89,10 +97,125 @@ export default function ProjectsPage() {
     createMutation.mutate(newProject);
   };
 
-  const handleImportFromCanvas = () => {
-    // TODO: Implement Canvas/Quercus API import
-    toast.info('Canvas import coming soon!');
-    setIsImportOpen(false);
+  const handleImportFromCanvas = async () => {
+    if (!canvasUrl || !canvasApiKey) {
+      toast.error('Please enter both Canvas URL and API key');
+      return;
+    }
+
+    try {
+      toast.loading('Fetching courses from Canvas...');
+      
+      // Fetch courses from Canvas
+      const response = await fetch('/api/canvas/courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ canvasUrl, apiKey: canvasApiKey }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Canvas courses');
+      }
+
+      const { courses } = await response.json();
+      setAvailableCourses(courses);
+      toast.success(`Found ${courses.length} courses!`);
+      setIsImportOpen(false);
+      setIsFileSelectionOpen(true);
+    } catch (error) {
+      console.error('Canvas import error:', error);
+      toast.error('Failed to connect to Canvas. Check your URL and API key.');
+    }
+  };
+
+  const handleSelectCourse = async (course: any) => {
+    setSelectedCourse(course);
+    
+    try {
+      toast.loading('Fetching course files...');
+      
+      // Fetch files from the selected course
+      const response = await fetch('/api/canvas/files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          canvasUrl,
+          apiKey: canvasApiKey,
+          courseId: course.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch course files');
+      }
+
+      const { files } = await response.json();
+      setAvailableFiles(files);
+      toast.success(`Found ${files.length} files in ${course.name}!`);
+    } catch (error) {
+      console.error('Error fetching files:', error);
+      toast.error('Failed to fetch course files');
+    }
+  };
+
+  const handleImportFiles = async () => {
+    if (selectedFiles.length === 0) {
+      toast.error('Please select at least one file to import');
+      return;
+    }
+
+    if (!selectedCourse) {
+      toast.error('No course selected');
+      return;
+    }
+
+    try {
+      toast.loading('Creating project and importing files...');
+      
+      // Create a new project
+      const projectResponse = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: selectedCourse.name,
+          description: `Imported from Canvas: ${selectedCourse.course_code || selectedCourse.name}`,
+        }),
+      });
+
+      if (!projectResponse.ok) {
+        throw new Error('Failed to create project');
+      }
+
+      const project = await projectResponse.json();
+
+      // Import selected files
+      const importResponse = await fetch('/api/canvas/import-files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: project.id,
+          canvasUrl,
+          apiKey: canvasApiKey,
+          fileIds: selectedFiles,
+        }),
+      });
+
+      if (!importResponse.ok) {
+        throw new Error('Failed to import files');
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setIsFileSelectionOpen(false);
+      setSelectedFiles([]);
+      setSelectedCourse(null);
+      setAvailableFiles([]);
+      setAvailableCourses([]);
+      toast.success(`Project "${project.name}" created with ${selectedFiles.length} files!`);
+      router.push(`/dashboard/project/${project.id}`);
+    } catch (error) {
+      console.error('Import error:', error);
+      toast.error('Failed to import files');
+    }
   };
 
   return (
@@ -126,7 +249,9 @@ export default function ProjectsPage() {
                     <Label htmlFor="canvas-url">Canvas URL</Label>
                     <Input
                       id="canvas-url"
-                      placeholder="e.g., https://canvas.instructure.com"
+                      placeholder="e.g., https://q.utoronto.ca"
+                      value={canvasUrl}
+                      onChange={(e) => setCanvasUrl(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -135,15 +260,23 @@ export default function ProjectsPage() {
                       id="api-key"
                       type="password"
                       placeholder="Your Canvas API key"
+                      value={canvasApiKey}
+                      onChange={(e) => setCanvasApiKey(e.target.value)}
                     />
+                    <p className="text-xs text-gray-500">
+                      Get your API key from: Account → Settings → New Access Token
+                    </p>
                   </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsImportOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleImportFromCanvas}>
-                    Import Courses
+                  <Button 
+                    onClick={handleImportFromCanvas}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    Fetch Courses
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -151,7 +284,7 @@ export default function ProjectsPage() {
 
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
-                <Button size="lg" className="bg-[#0b8e16] hover:bg-[#097a12] text-white shadow-sm">
+                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   New Project
                 </Button>
@@ -190,6 +323,7 @@ export default function ProjectsPage() {
                   <Button 
                     onClick={handleCreateProject}
                     disabled={createMutation.isPending}
+                    className="bg-emerald-600 hover:bg-emerald-700"
                   >
                     {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Create Project
@@ -199,6 +333,121 @@ export default function ProjectsPage() {
             </Dialog>
           </div>
         </div>
+
+        {/* File Selection Modal */}
+        <Dialog open={isFileSelectionOpen} onOpenChange={setIsFileSelectionOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle>Select Files to Import</DialogTitle>
+              <DialogDescription>
+                {selectedCourse ? `Choose files from ${selectedCourse.name}` : 'Select a course first'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {/* Course Selection */}
+            {!selectedCourse && availableCourses.length > 0 && (
+              <div className="space-y-3 max-h-96 overflow-y-auto py-4">
+                <h3 className="font-medium text-sm text-gray-700">Available Courses:</h3>
+                {availableCourses.map((course) => (
+                  <button
+                    key={course.id}
+                    onClick={() => handleSelectCourse(course)}
+                    className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all"
+                  >
+                    <h4 className="font-semibold text-gray-900">{course.name}</h4>
+                    {course.course_code && (
+                      <p className="text-sm text-gray-600 mt-1">{course.course_code}</p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* File Selection */}
+            {selectedCourse && (
+              <div className="flex-1 overflow-y-auto py-4">
+                {availableFiles.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+                    <p>Loading files...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-medium text-sm text-gray-700">
+                        {availableFiles.length} files available
+                      </h3>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedFiles(availableFiles.map(f => f.id))}
+                        >
+                          Select All
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedFiles([])}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+                    {availableFiles.map((file) => (
+                      <label
+                        key={file.id}
+                        className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedFiles.includes(file.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFiles([...selectedFiles, file.id]);
+                            } else {
+                              setSelectedFiles(selectedFiles.filter(id => id !== file.id));
+                            }
+                          }}
+                          className="mt-1 h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{file.display_name || file.filename}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB · {file.content_type || 'Unknown type'}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsFileSelectionOpen(false);
+                  setSelectedCourse(null);
+                  setAvailableFiles([]);
+                  setSelectedFiles([]);
+                }}
+              >
+                Cancel
+              </Button>
+              {selectedCourse && (
+                <Button
+                  onClick={handleImportFiles}
+                  disabled={selectedFiles.length === 0}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  Import {selectedFiles.length} File{selectedFiles.length !== 1 ? 's' : ''}
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Stats Cards - Minimal and clean */}
         <div className="mb-12 grid gap-6 sm:grid-cols-3">
@@ -243,22 +492,6 @@ export default function ProjectsPage() {
               <p className="mb-6 max-w-sm text-sm text-gray-600">
                 Create your first project or import courses from Canvas to get started.
               </p>
-              <div className="flex gap-3">
-                <Button 
-                  onClick={() => setIsImportOpen(true)}
-                  variant="outline"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Import from Canvas
-                </Button>
-                <Button 
-                  onClick={() => setIsCreateOpen(true)}
-                  className="bg-[#0b8e16] hover:bg-[#097a12]"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Project
-                </Button>
-              </div>
             </div>
           </div>
         ) : (
@@ -288,7 +521,7 @@ export default function ProjectsPage() {
                   {/* Project content */}
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1 pr-8 line-clamp-1 group-hover:text-[#0b8e16] transition-colors">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1 pr-8 line-clamp-1 group-hover:text-emerald-600 transition-colors">
                         {project.name}
                       </h3>
                       {project.description && (

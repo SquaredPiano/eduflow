@@ -45,6 +45,7 @@ import OutputNode from '@/components/canvas/OutputNode';
 import { FloatingChat } from '@/components/canvas/FloatingChat';
 import { AgentSidebar, AgentSidebarToggle } from '@/components/canvas/AgentSidebar';
 import { RegenerateDialog } from '@/components/canvas/RegenerateDialog';
+import { OutputModal } from '@/components/outputs/OutputModal';
 
 const nodeTypes: NodeTypes = {
   fileNode: FileNode,
@@ -93,6 +94,17 @@ export default function CanvasPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showAgentSidebar, setShowAgentSidebar] = useState(false);
   const [nodeId, setNodeId] = useState(0);
+  
+  // Output viewing state
+  const [outputModal, setOutputModal] = useState<{
+    isOpen: boolean;
+    outputType: 'notes' | 'flashcards' | 'quiz' | 'slides' | null;
+    outputId: string | null;
+  }>({
+    isOpen: false,
+    outputType: null,
+    outputId: null,
+  });
   
   // Regeneration state
   const [regenerateDialog, setRegenerateDialog] = useState<{
@@ -310,25 +322,55 @@ export default function CanvasPage() {
   );
 
   const handleGenerate = async (type: string) => {
-    if (!project?.files[0]) {
+    if (!project?.files || project.files.length === 0) {
       toast.error('Please upload a file first');
       return;
     }
 
     setIsGenerating(true);
+    toast.info(`Generating ${type}...`);
+    
     try {
-      // Step 1: Get transcript ID from file ID
-      const transcriptResponse = await api.get<{ success: boolean; transcript: { id: string; content: string } }>(
-        `/api/files/${project.files[0].id}/transcript`
-      );
+      // Step 1: Collect ALL transcripts from ALL files in the project
+      const allTranscripts: Array<{ id: string; content: string; fileName: string }> = [];
       
-      if (!transcriptResponse.transcript) {
-        toast.error('No transcript found. Please wait for file processing to complete.');
+      for (const file of project.files) {
+        try {
+          const transcriptResponse = await api.get<{ success: boolean; transcript: { id: string; content: string } }>(
+            `/api/files/${file.id}/transcript`
+          );
+          
+          if (transcriptResponse.transcript && transcriptResponse.transcript.content) {
+            allTranscripts.push({
+              id: transcriptResponse.transcript.id,
+              content: transcriptResponse.transcript.content,
+              fileName: file.name,
+            });
+          }
+        } catch (err) {
+          console.warn(`No transcript for file ${file.name}:`, err);
+        }
+      }
+      
+      if (allTranscripts.length === 0) {
+        toast.error('No transcripts found. Please wait for file processing to complete.');
         setIsGenerating(false);
         return;
       }
+
+      console.log(`✅ Found ${allTranscripts.length} transcript(s) from ${project.files.length} file(s)`);
       
-      const transcriptId = transcriptResponse.transcript.id;
+      // Use the first transcript's ID but combine all content
+      const primaryTranscriptId = allTranscripts[0].id;
+      
+      // Combine all transcript content with file labels
+      let combinedContent = '';
+      if (allTranscripts.length > 1) {
+        combinedContent = '\n\n=== Combined Content from Multiple Files ===\n\n';
+        allTranscripts.forEach((t, idx) => {
+          combinedContent += `\n--- File ${idx + 1}: ${t.fileName} ---\n${t.content}\n`;
+        });
+      }
 
       // Step 2: Detect agent chaining - find connected agent nodes and collect their outputs
       const currentAgentId = `agent-${type}`;
@@ -350,7 +392,7 @@ export default function CanvasPage() {
         }
       }
 
-      // Step 3: Call generate API with correct transcriptId and optional agent context
+      // Step 3: Call generate API with primary transcript ID and combined content in userContext
       const generateResponse = await api.post<{
         success: boolean;
         output: {
@@ -360,17 +402,18 @@ export default function CanvasPage() {
           transcriptId: string;
         };
       }>('/api/generate', {
-        transcriptId,
+        transcriptId: primaryTranscriptId,
         type,
         ...(agentContext.length > 0 && { agentContext }),
+        ...(combinedContent && { userContext: combinedContent }),
       });
 
       const output = generateResponse.output;
 
-      // Step 3: Update node with generated content
+      // Step 4: Update node with generated content
       setNodes((nds) =>
         nds.map((node) => {
-          if (node.id === `agent-${type}`) {
+          if (node.id === `agent-${type}` || node.data.type === type) {
             // Extract preview content based on type
             let preview = '';
             try {
@@ -379,13 +422,16 @@ export default function CanvasPage() {
                 : output.content;
               
               if (type === 'flashcards' && Array.isArray(content)) {
-                preview = content[0]?.front || 'Flashcards generated';
+                preview = `${content.length} flashcards generated`;
               } else if (type === 'quiz' && content.questions) {
-                preview = content.questions[0]?.question || 'Quiz generated';
-              } else if (type === 'notes' && typeof content === 'string') {
-                preview = content.substring(0, 100);
+                preview = `${content.questions.length} questions generated`;
+              } else if (type === 'notes') {
+                const noteText = typeof content === 'string' ? content : content.content || '';
+                preview = noteText.substring(0, 120) + '...';
               } else if (type === 'slides' && content.slides) {
                 preview = `${content.slides.length} slides generated`;
+              } else {
+                preview = 'Content generated successfully';
               }
             } catch {
               preview = 'Content generated successfully';
@@ -427,7 +473,17 @@ export default function CanvasPage() {
   };
 
   const handleViewOutput = (type: string) => {
-    router.push(`/dashboard/project/${projectId}?tab=outputs&type=${type}`);
+    // Find the output for this agent type
+    const agentNode = nodes.find(n => n.data.type === type && n.data.outputId);
+    if (agentNode && agentNode.data.outputId) {
+      setOutputModal({
+        isOpen: true,
+        outputType: type as any,
+        outputId: String(agentNode.data.outputId),
+      });
+    } else {
+      toast.error('No output generated yet. Click Generate first.');
+    }
   };
 
   const handleOpenRegenerateDialog = (type: 'notes' | 'flashcards' | 'quiz' | 'slides') => {
@@ -825,7 +881,7 @@ export default function CanvasPage() {
           fitView
           className="bg-[#FAF9F6]"
         >
-          <Background color="#e5e7eb" gap={16} />
+          <Background color="#94a3b8" gap={16} size={1} />
           <Controls />
           <MiniMap
             nodeColor={(node) => {
@@ -958,7 +1014,22 @@ export default function CanvasPage() {
         onRegenerate={handleRegenerateWithContext}
         agentType={regenerateDialog.agentType}
         outputId={regenerateDialog.outputId}
-      />      {/* Settings Drawer */}
+      />
+
+      {/* Output Modal */}
+      <OutputModal
+        isOpen={outputModal.isOpen}
+        onClose={() => setOutputModal({ isOpen: false, outputType: null, outputId: null })}
+        outputType={outputModal.outputType}
+        outputId={outputModal.outputId}
+        onDownload={() => {
+          if (outputModal.outputId) {
+            handleDownloadOutput(outputModal.outputId);
+          }
+        }}
+      />
+
+      {/* Settings Drawer */}
       <AnimatePresence>
         {showSettings && (
           <>

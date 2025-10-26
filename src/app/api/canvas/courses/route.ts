@@ -37,7 +37,7 @@ async function getSessionUser() {
 
 /**
  * GET /api/canvas/courses
- * Fetch courses from Canvas LMS
+ * Fetch courses from Canvas LMS (using stored credentials)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -71,6 +71,39 @@ export async function GET(request: NextRequest) {
     console.error('Canvas courses fetch error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch Canvas courses' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/canvas/courses
+ * Fetch courses from Canvas LMS (using provided credentials)
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { canvasUrl, apiKey } = body;
+
+    if (!canvasUrl || !apiKey) {
+      return NextResponse.json(
+        { error: 'Canvas URL and API key are required' },
+        { status: 400 }
+      );
+    }
+
+    const client = createCanvasClient(canvasUrl, apiKey);
+
+    const courses = await client.getCourses({
+      enrollment_state: 'active',
+      include: ['term', 'teachers'],
+    });
+
+    return NextResponse.json({ courses });
+  } catch (error) {
+    console.error('Canvas courses fetch error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch Canvas courses. Check your URL and API key.' },
       { status: 500 }
     );
   }

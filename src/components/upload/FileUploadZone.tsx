@@ -35,7 +35,23 @@ export function FileUploadZone({ projectId, onUploadComplete }: FileUploadZonePr
           onUploadProgress={(progress) => {
             setUploadProgress(progress);
           }}
-          className="ut-label:text-lg ut-allowed-content:ut-uploading:text-primary/50"
+          appearance={{
+            button: {
+              cursor: 'pointer',
+            },
+            label: {
+              cursor: 'pointer',
+            },
+            container: {
+              cursor: 'pointer',
+            },
+          }}
+          content={{
+            button: 'Choose file(s)',
+            label: 'Click to upload or drag and drop',
+            allowedContent: 'PDF, DOCX, PPTX, Images, Audio, Video (up to 32MB)',
+          }}
+          className="ut-label:text-lg ut-allowed-content:ut-uploading:text-primary/50 cursor-pointer"
         />
         
         {uploadProgress > 0 && uploadProgress < 100 && (
