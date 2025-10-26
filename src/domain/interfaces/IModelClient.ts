@@ -1,9 +1,36 @@
 /**
- * Lightweight model client abstraction.
- * Prefer a single `complete`/`call` method so implementations can adapt to many LLM providers.
+ * IModelClient - Interface for AI model abstraction
+ * 
+ * Purpose: Defines contract for interacting with various AI model providers
+ * (Gemini, OpenRouter, etc.) to enable dependency injection and testability
  */
-export interface IModelClient {
-  complete(prompt: string, options?: Record<string, unknown>): Promise<string>
+
+export interface CompletionOptions {
+  /**
+   * Controls randomness in generation (0.0 = deterministic, 1.0 = creative)
+   */
+  temperature?: number;
+
+  /**
+   * Maximum number of tokens to generate
+   */
+  maxTokens?: number;
+
+  /**
+   * System-level instructions that guide the model's behavior
+   */
+  systemPrompt?: string;
 }
 
-export default IModelClient
+export interface IModelClient {
+  /**
+   * Generate text completion from a prompt
+   * 
+   * @param prompt - The user prompt/content to process
+   * @param options - Optional completion parameters
+   * @returns Generated text response
+   */
+  complete(prompt: string, options?: CompletionOptions): Promise<string>;
+}
+
+export default IModelClient;
