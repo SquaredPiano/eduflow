@@ -449,34 +449,6 @@ export default function ProjectsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Stats Cards - Minimal and clean */}
-        <div className="mb-12 grid gap-6 sm:grid-cols-3">
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="text-sm font-medium text-gray-500 mb-2">
-              Projects
-            </div>
-            <div className="text-3xl font-semibold text-gray-900">
-              {isLoading ? '—' : projects.length}
-            </div>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="text-sm font-medium text-gray-500 mb-2">
-              Files
-            </div>
-            <div className="text-3xl font-semibold text-gray-900">
-              {isLoading ? '—' : projects.reduce((acc, p) => acc + (p._count?.files || 0), 0)}
-            </div>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="text-sm font-medium text-gray-500 mb-2">
-              AI Outputs
-            </div>
-            <div className="text-3xl font-semibold text-gray-900">
-              {isLoading ? '—' : projects.reduce((acc, p) => acc + (p._count?.outputs || 0), 0)}
-            </div>
-          </div>
-        </div>
-
         {/* Projects Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-24">
