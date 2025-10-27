@@ -1096,6 +1096,20 @@ export default function CanvasPage() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Floating Chat */}
+      <FloatingChat
+        agents={nodes
+          .filter((node) => node.type === 'agentNode')
+          .map((node) => ({
+            id: node.id,
+            type: (node.data?.agentType as string) || 'notes',
+            draft: (node.data?.draft as string) || '',
+          }))}
+        messages={messages}
+        onSendMessage={handleSendMessage}
+        isGenerating={isGenerating}
+      />
     </div>
   );
 }
